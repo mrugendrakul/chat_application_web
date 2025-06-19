@@ -1,34 +1,34 @@
-import React, { useEffect, useState } from 'react'
+import React, {  useState } from 'react'
 // import personIcon from './assets/person.svg'
 // import visibilityIcon from './assets/visibility.svg'
 // import visibilityOffIcon from './assets/visibility_off.svg'
 import firebaseApp from './firebaseUtils/initFirebase.jsx'
 import { NavLink } from 'react-router'
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth'
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth'
 
 import { useNavigate } from 'react-router';
 
 function LoginScreen() {
     const navigate = useNavigate();
     const auth = getAuth(firebaseApp);
-    //   onAuthStateChanged(auth,(user)=>{
-    //     if(user){
-    //       console.log("User is logged in", user);
-    //       navigate('/chatApp', {state: user.email}); // Redirect to chatApp with user email
-    //     }else{
-    //       console.log("No user is logged in");
+      onAuthStateChanged(auth,(user)=>{
+        if(user){
+          console.log("User is logged in", user);
+          navigate('/chatApp', {state: user.email}); // Redirect to chatApp with user email
+        }else{
+          console.log("No user is logged in");
+        }
+      })
+    // useEffect(() => {
+    //     const user = auth.currentUser;
+    //     if (user) {
+    //         console.log("User is already logged in", user);
+    //         navigate('/chatApp', { state: user.email }); // Redirect to chatApp with user email
     //     }
-    //   })
-    useEffect(() => {
-        const user = auth.currentUser;
-        if (user) {
-            console.log("User is already logged in", user);
-            navigate('/chatApp', { state: user.email }); // Redirect to chatApp with user email
-        }
-        else {
-            console.log("No user is logged in, you can login now");
-        }
-    }, [])
+    //     else {
+    //         console.log("No user is logged in, you can login now");
+    //     }
+    // }, [])
     const [formData, setFormData] = useState({
         email: "",
         password: ""

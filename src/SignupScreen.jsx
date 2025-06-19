@@ -1,21 +1,29 @@
-import React, { useEffect, useState } from 'react'
+import React, {  useState } from 'react'
 import { NavLink, useNavigate } from 'react-router';
 import firebaseApp from './firebaseUtils/initFirebase.jsx';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
 
 function SignupScreen() {
     const navigate = useNavigate();
     const auth = getAuth(firebaseApp);
-    useEffect(() => {
-        const user = auth.currentUser;
-        if (user) {
-            console.log("User is already logged in", user);
-            navigate('/chatApp', { state: user.email }); // Redirect to chatApp with user email
-        }
-        else {
-            console.log("No user is logged in, you can login now");
-        }
-    }, [])
+    onAuthStateChanged(auth,(user)=>{
+            if(user){
+              console.log("User is logged in", user);
+              navigate('/chatApp', {state: user.email}); // Redirect to chatApp with user email
+            }else{
+              console.log("No user is logged in");
+            }
+          })
+    // useEffect(() => {
+    //     const user = auth.currentUser;
+    //     if (user) {
+    //         console.log("User is already logged in", user);
+    //         navigate('/chatApp', { state: user.email }); // Redirect to chatApp with user email
+    //     }
+    //     else {
+    //         console.log("No user is logged in, you can login now");
+    //     }
+    // }, [])
     const [formData, setFormData] = useState({
         email: "",
         password: ""
