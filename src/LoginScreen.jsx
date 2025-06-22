@@ -1,24 +1,25 @@
-import React, {  useState } from 'react'
+import React, {  useEffect, useState } from 'react'
 // import personIcon from './assets/person.svg'
 // import visibilityIcon from './assets/visibility.svg'
 // import visibilityOffIcon from './assets/visibility_off.svg'
 import firebaseApp from './firebaseUtils/initFirebase.jsx'
 import { NavLink } from 'react-router'
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth'
+import { getAuth, onAuthStateChanged } from 'firebase/auth'
 
 import { useNavigate } from 'react-router';
+import firebaseApis from './firebaseUtils/firebaseApis.jsx';
 
 function LoginScreen() {
     const navigate = useNavigate();
     const auth = getAuth(firebaseApp);
-      onAuthStateChanged(auth,(user)=>{
-        if(user){
-          console.log("User is logged in", user);
-          navigate('/chatApp', {state: user.email}); // Redirect to chatApp with user email
-        }else{
-          console.log("No user is logged in");
-        }
-      })
+      useEffect(()=>{ onAuthStateChanged(auth,(user)=>{
+                  if(user){
+                    console.log("User is logged in", user);
+                    navigate('/chatApp', {state: user.email}); // Redirect to chatApp with user email
+                  }else{
+                    console.log("No user is logged in");
+                  }
+                })},[])
     // useEffect(() => {
     //     const user = auth.currentUser;
     //     if (user) {
@@ -50,15 +51,14 @@ function LoginScreen() {
     const submitForm = (e) => {
         e.preventDefault();
         // console.log("Form Submitted", formData);
-        signInWithEmailAndPassword(auth, formData.email, formData.password)
-            .then((userCredential) => {
-                const user = userCredential.user;
+       firebaseApis().loginUser(formData.email, formData.password)
+            .then(([user]) => {
                 console.log("User logged in successfully", user);
-                navigate('/chatApp', { state: user.email }); // Redirect to chatApp with user email
+                navigate('/chatApp', { state: user.email }); // Redirect to chatApp with user
             })
-            .catch((error) => {
+            .catch(([error]) => {
                 console.error("Error logging in", error);
-                alert("Error logging in: " + error.message);
+                alert("Login failed. Please check your email and password.");
             });
 
         setFormData({

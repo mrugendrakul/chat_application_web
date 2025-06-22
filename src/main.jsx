@@ -6,6 +6,9 @@ import App from './App.jsx'
 import LoginScreen from './LoginScreen.jsx'
 import SignupScreen from './SignupScreen.jsx'
 import MainChatApp from './MainChatApp.jsx'
+import { Buffer } from 'buffer';
+window.Buffer = Buffer;
+
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -20,5 +23,6 @@ createRoot(document.getElementById('root')).render(
       
     </BrowserRouter>
     
+     
   </StrictMode>,
 )

@@ -1,19 +1,21 @@
-import React, {  useState } from 'react'
+import React, {  useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router';
 import firebaseApp from './firebaseUtils/initFirebase.jsx';
-import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import firebaseApis from './firebaseUtils/firebaseApis.jsx';
+import DataRepository from './dataLayer/dataRepository.jsx';
 
 function SignupScreen() {
     const navigate = useNavigate();
     const auth = getAuth(firebaseApp);
-    onAuthStateChanged(auth,(user)=>{
+   useEffect(()=>{ onAuthStateChanged(auth,(user)=>{
             if(user){
               console.log("User is logged in", user);
               navigate('/chatApp', {state: user.email}); // Redirect to chatApp with user email
             }else{
               console.log("No user is logged in");
             }
-          })
+          })},[])
     // useEffect(() => {
     //     const user = auth.currentUser;
     //     if (user) {
@@ -43,15 +45,36 @@ function SignupScreen() {
 
     const submitForm = (e) => {
         e.preventDefault();
-        createUserWithEmailAndPassword(auth, formData.email, formData.password)
-            .then((userCredential) => {
-                const user = userCredential.user;
-                console.log("User signuped in successfully", user);
+        // createUserWithEmailAndPassword(auth, formData.email, formData.password)
+        //     .then((userCredential) => {
+        //         const user = userCredential.user;
+        //         console.log("User signuped in successfully", user);
+        //         navigate('/chatApp', { state: user.email }); // Redirect to chatApp with user email
+        //     })
+        //     .catch((error) => {
+        //         console.error("Error logging in", error);
+        //     });
+
+        // firebaseApis().registerUser(formData.email, formData.password)
+        //     .then(([user, success]) => {
+        //         console.log("User signuped in successfully", user,success);
+        //         navigate('/chatApp', { state: user.email }); // Redirect to chatApp with user email
+        //     })
+        //     .catch(([error, success]) => {
+        //         console.error("Error logging in", error, success);
+        //         alert("Error logging in: " + error.message);
+        //     });
+
+        DataRepository().registerUser(formData.email, formData.password)
+            .then(([user, signUpUser]) => {
+                console.log("User signuped in successfully", user, signUpUser);
                 navigate('/chatApp', { state: user.email }); // Redirect to chatApp with user email
             })
-            .catch((error) => {
-                console.error("Error logging in", error);
+            .catch(([error, success]) => { 
+                console.error("Error logging in", error, success);
+                alert("Error logging in: " + error.message);
             });
+        // For now, just log the form data
         // console.log("Form Submitted", formData);
         setFormData({
             email: "",
