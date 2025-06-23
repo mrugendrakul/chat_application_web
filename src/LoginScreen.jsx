@@ -7,7 +7,8 @@ import { NavLink } from 'react-router'
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
 
 import { useNavigate } from 'react-router';
-import firebaseApis from './firebaseUtils/firebaseApis.jsx';
+
+import DataRepository from './dataLayer/dataRepository.jsx';
 
 function LoginScreen() {
     const navigate = useNavigate();
@@ -51,8 +52,8 @@ function LoginScreen() {
     const submitForm = (e) => {
         e.preventDefault();
         // console.log("Form Submitted", formData);
-       firebaseApis().loginUser(formData.email, formData.password)
-            .then(([user]) => {
+       DataRepository().loginUser(formData.email, formData.password)
+            .then((user) => {
                 console.log("User logged in successfully", user);
                 navigate('/chatApp', { state: user.email }); // Redirect to chatApp with user
             })

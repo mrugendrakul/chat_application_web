@@ -7,15 +7,16 @@ function MainChatApp() {
     const { state } = useLocation();
     const [User, SetUser] = useState(null);
     const navigate = useNavigate();
-    if (state === null) {
-        console.log("No state received, this is the first time visiting this page");
-    }
+    
     const [text,setText] = useState("");
     // const user = auth.currentUser;
 
     
 
     useEffect(() => {
+        if (state === null) {
+        console.log("No state received, this is the first time visiting this page");
+    }
         const unsubcribe = onAuthStateChanged(auth,(user)=>{
             if(user){
             //   console.log("User is logged in", user);

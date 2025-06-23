@@ -80,15 +80,28 @@ function DataRepository(
 
         loginUser: (email, password) => {
             return new Promise((resolve, reject) => {
-                signInWithEmailAndPassword(auth, email, password)
-                    .then((userCredential) => {
-                        const user = userCredential.user;;
-                        resolve([user])
+                signInWithEmailAndPassword(auth,email,password)
+                    .then((currentUser)=>{
+                        console.log("User logged in Successfully");
+                        const user = currentUser.user;
+                        const loggedInUser = User({
+                            username:user.email,
+                            docId: user.uid,
+                            password: password,
+                            
+                        })
+                        return networkFirebaseApis.loginUser(loggedInUser)
+                    })
+                    .then((userLogIn)=>{
+                        //Add data to browser storage
+                        console.log("User logged in successfully", userLogIn);
+                        resolve(userLogIn);
                     })
                     .catch((error) => {
                         console.error("Error logging in", error);
-                        reject([error])
-                    })
+                        reject([error, false]);
+                    })  
+
             })
         }
     }
