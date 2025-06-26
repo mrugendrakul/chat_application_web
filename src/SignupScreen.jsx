@@ -2,8 +2,9 @@ import React, {  useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router';
 import firebaseApp from './firebaseUtils/initFirebase.jsx';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import firebaseApis from './firebaseUtils/firebaseApis.jsx';
+
 import DataRepository from './dataLayer/dataRepository.jsx';
+import LoadingStatus from './components/LoadingStatus.jsx';
 
 function SignupScreen() {
     const navigate = useNavigate();
@@ -30,6 +31,7 @@ function SignupScreen() {
         email: "",
         password: ""
     })
+    const [isLoading, setIsLoading] = useState(false);
     const handleChange = (e) => {
         const { id, value } = e.target;
         setFormData({
@@ -45,6 +47,7 @@ function SignupScreen() {
 
     const submitForm = (e) => {
         e.preventDefault();
+        setIsLoading(true);
         // createUserWithEmailAndPassword(auth, formData.email, formData.password)
         //     .then((userCredential) => {
         //         const user = userCredential.user;
@@ -66,8 +69,9 @@ function SignupScreen() {
         //     });
 
         DataRepository().registerUser(formData.email, formData.password)
-            .then(([user, signUpUser]) => {
-                console.log("User signuped in successfully", user, signUpUser);
+            .then(([user, signkeyStatus]) => {
+                console.log("User signuped in successfully", user, signkeyStatus);
+                setIsLoading(false);
                 navigate('/chatApp', { state: user.email }); // Redirect to chatApp with user email
             })
             .catch(([error, success]) => { 
@@ -81,8 +85,13 @@ function SignupScreen() {
             password: ""
         });
     }
+
+    const LoadingSpinner =()=>{
+        if(isLoading) return <LoadingStatus/>;
+    }
     return (
         <div>
+            {LoadingSpinner()}
             <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-800">
                 <div className="bg-white p-8 rounded-lg shadow-md w-96 dark:bg-gray-900">
                     <h2 className="text-2xl font-bold mb-6 text-center text-blue-500">Sign up now</h2>

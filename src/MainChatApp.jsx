@@ -2,6 +2,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import React, {  useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { auth } from './firebaseUtils/initFirebase.jsx'
+import DataRepository from './dataLayer/dataRepository.jsx';
 
 function MainChatApp() {
     const { state } = useLocation();
@@ -23,7 +24,12 @@ function MainChatApp() {
             //   return
             //   navigate('/chatApp', {state: user.email});
                 // Redirect to chatApp with user email
-                SetUser(user);
+                // SetUser(user);
+                DataRepository().getCurrentUser()
+                .then((user)=>{
+                    console.log("Current user ",user)
+                    SetUser(user)
+                })
                 unsubcribe();
             }else{
             //   console.log("No user is logged in");
@@ -31,19 +37,22 @@ function MainChatApp() {
             }
           })
     }, [])
+
+    const SignoutButton=()=>{
+        DataRepository().logoutUser()
+        .then((stats)=>{
+            console.log("User signed out successfully In ui",stats);
+            navigate('/')
+        })
+    }
+
     return (
         <div>
             MainChatApp
             Data received : {state ? state : "First time visiting this page"} <br />
-            userData : {User ? User.email : "No user data available"} <br />
+            userData : {User ? User.username : "No user data available"} <br />
             <button className="bg-red-300 rounded-2xl p-2 m-2 cursor-pointer hover:bg-red-700 hover:text-white"
-                onClick={() => {
-                    signOut(auth)
-                        .then(() => {
-                            console.log("User signed out successfully");
-                            navigate('/')
-                        })
-                }}
+                onClick={SignoutButton}
             >
                 Logout from here
             </button>

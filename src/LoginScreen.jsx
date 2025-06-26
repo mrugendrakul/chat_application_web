@@ -9,16 +9,19 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth'
 import { useNavigate } from 'react-router';
 
 import DataRepository from './dataLayer/dataRepository.jsx';
+import LoadingStatus from './components/LoadingStatus.jsx';
 
 function LoginScreen() {
     const navigate = useNavigate();
     const auth = getAuth(firebaseApp);
-      useEffect(()=>{ onAuthStateChanged(auth,(user)=>{
+      useEffect(()=>{ const subscriber = onAuthStateChanged(auth,(user)=>{
                   if(user){
                     console.log("User is logged in", user);
-                    navigate('/chatApp', {state: user.email}); // Redirect to chatApp with user email
+                    navigate('/chatApp', {state: user.email});
+                    subscriber() // Redirect to chatApp with user email
                   }else{
                     console.log("No user is logged in");
+                    subscriber()
                   }
                 })},[])
     // useEffect(() => {
@@ -35,6 +38,7 @@ function LoginScreen() {
         email: "",
         password: ""
     })
+    const [isLoading, setIsLoading] = useState(false);
     const handleChange = (e) => {
         const { id, value } = e.target;
         setFormData({
@@ -51,13 +55,16 @@ function LoginScreen() {
 
     const submitForm = (e) => {
         e.preventDefault();
+        setIsLoading(true);
         // console.log("Form Submitted", formData);
        DataRepository().loginUser(formData.email, formData.password)
-            .then((user) => {
-                console.log("User logged in successfully", user);
+            .then(([user,keystatus]) => {
+                setIsLoading(false);
+                console.log("User logged in successfully in form", user, keystatus);
                 navigate('/chatApp', { state: user.email }); // Redirect to chatApp with user
             })
             .catch(([error]) => {
+                setIsLoading(false);
                 console.error("Error logging in", error);
                 alert("Login failed. Please check your email and password.");
             });
@@ -67,8 +74,15 @@ function LoginScreen() {
             password: ""
         });
     }
+    const LoadingBlock =()=>{
+        if(isLoading){
+            return <LoadingStatus/>
+        }
+    }
     return (
         <div>
+            {LoadingBlock()}
+            
             <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-800">
                 <div className="bg-white p-8 rounded-lg shadow-md w-96 dark:bg-gray-900">
                     <h2 className="text-2xl font-bold mb-6 text-center text-blue-500">Login</h2>
