@@ -1,8 +1,9 @@
-import { createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import firebaseApis from "../firebaseUtils/firebaseApis";
 import firebaseApp from '../firebaseUtils/initFirebase.jsx';
 import EncryptionService from "./encryptionService.jsx";
 import User from "../dataLayer/User.jsx";
+import { deleteKeyFromBrowser, getKeyFromBrowser, saveKeyToBrowser } from "./keyStorage.js";
 
 
 function generateSixDigitUUID(n) {
@@ -30,7 +31,7 @@ function DataRepository(
         registerUser: (email, password) => {
             return new Promise((resolve, reject) => {
                 try {
-                    const  {publicKey,privateKey} = EncryptionService.generateRSAKeyPair()
+                    const { publicKey, privateKey } = EncryptionService.generateRSAKeyPair()
 
                     createUserWithEmailAndPassword(auth, email, password)
                         .then((userCredential) => {
@@ -51,16 +52,28 @@ function DataRepository(
                             })
 
                             //Store keys to browser storage
-                            // console.log("Signup user",signUpUser)
-                            networkFirebaseApis.registerUser(signUpUser,privateKey)
-                                .then((response) => {
-                                    console.log("User registered successfully", response);
-                                    resolve([user, signUpUser]);
+                            saveKeyToBrowser({
+                                keyId: "1",
+                                publicKey: publicKey,
+                                privateKey: privateKey
+                            })
+                                .then((browserKeyStatus) => {
+                                    networkFirebaseApis.registerUser(signUpUser, privateKey)
+                                        .then((response) => {
+                                            console.log("User registered successfully", response);
+                                            resolve([signUpUser, browserKeyStatus]);
+                                        })
+                                        .catch((error) => {
+                                            console.error("Error registering user", error);
+                                            reject([error, false]);
+                                        })
                                 })
                                 .catch((error) => {
-                                    console.error("Error registering user", error);
+                                    console.error("Error saving key to browser", error);
                                     reject([error, false]);
                                 })
+                            // console.log("Signup user",signUpUser)
+
 
                         })
                         .catch((error) => {
@@ -80,28 +93,86 @@ function DataRepository(
 
         loginUser: (email, password) => {
             return new Promise((resolve, reject) => {
-                signInWithEmailAndPassword(auth,email,password)
-                    .then((currentUser)=>{
-                        console.log("User logged in Successfully");
+                signInWithEmailAndPassword(auth, email, password)
+                    .then((currentUser) => {
+                        console.log("User logged in Successfully datarepository");
                         const user = currentUser.user;
                         const loggedInUser = User({
-                            username:user.email,
+                            username: user.email,
                             docId: user.uid,
                             password: password,
-                            
+
                         })
                         return networkFirebaseApis.loginUser(loggedInUser)
                     })
-                    .then((userLogIn)=>{
+                    .then((userLogIn) => {
                         //Add data to browser storage
-                        console.log("User logged in successfully", userLogIn);
-                        resolve(userLogIn);
+                        console.log("User logged in successfully saving keys", userLogIn);
+                        return [saveKeyToBrowser({
+                            keyId: "1",
+                            publicKey: userLogIn.publicRSAKey,
+                            privateKey: userLogIn.privateEncryptedRSAKey
+                        }),userLogIn]
+                        
+                    })
+                    .then(([browserKeyStatus, userLogIn]) => {
+                        // console.log("Keys saved to browser storage", browserKeyStatus);
+                        browserKeyStatus
+                        .then((browserKeyStatus) => {
+                            console.log("Keys saved to browser storage", browserKeyStatus);
+                            // return {browserKeyStatus, userLogIn}; 
+                            resolve([userLogIn,browserKeyStatus])
+                        })
+                        .catch((error) => {
+                            console.error("Error saving keys to browser storage", error);
+                            return [error, false]; 
+                        })
+                        
+                        
                     })
                     .catch((error) => {
                         console.error("Error logging in", error);
                         reject([error, false]);
-                    })  
+                    })
 
+            })
+        },
+
+        getCurrentUser:()=>{
+            return new Promise((resolve,reject)=>{
+                const currentUser = auth.currentUser
+                getKeyFromBrowser("1")
+                .then((browswerKeys)=>{
+                    console.log("Getting key from browser")
+                    const curUser = User({
+                        username: currentUser.email,
+                        docId: currentUser.uid,
+                        publicRSAKey: browswerKeys.publicKey,
+                        privateEncryptedRSAKey: browswerKeys.privateKey,
+                        isMigrated: true
+                    })
+                    resolve (curUser)
+                })
+                .catch((error)=>{
+                    console.error("Error getting user",error)
+                    reject(error)
+                })
+            })
+        },
+
+        logoutUser:()=>{
+            return new Promise((resolve, reject)=>{
+                deleteKeyFromBrowser("1")
+                .then((status)=>{
+                    if(status){
+                        return signOut(auth)
+                    }
+
+                })
+                .then((uStatus)=>{
+                    console.log("User signouted")
+                    resolve(uStatus)
+                })
             })
         }
     }
