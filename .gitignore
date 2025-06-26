@@ -30,5 +30,6 @@ firebase.json
 firestore.indexes.json
 .firebaserc
 
+src/firebaseUtils/initFirebase.jsx
 dataFirebase
 .env
