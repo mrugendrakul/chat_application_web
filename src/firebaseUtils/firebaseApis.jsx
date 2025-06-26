@@ -47,7 +47,12 @@ function firebaseApis(
                 const keyRef = doc(db, keysCollection, user.docId);
                 console.log("Key ref", keyRef);
                 // Step 1: update FCM
-                 getDoc(userRef) 
+                updateDoc(userRef, { fcmTokens: arrayUnion("New device : "+user.docId) })
+                    .then(() => {
+                        console.log("FCM token added");
+                        // Step 2: fetch secure keys
+                        return getDoc(userRef);
+                    })
                     .then(userSnap => {
                         let privateKey = userSnap.get("privateEncryptedRSAKey") || "";
                         let isMigrated = false;
@@ -67,7 +72,7 @@ function firebaseApis(
                     .then(({ privateKey, isMigrated, userSnap }) => {
                         console.log("Update ended in API");
                         const userData = {
-                            username: userSnap.get("username")||"",
+                            // username: userSnap.get("username")||"",
                             uniqueId: userSnap.get("uniqueId")||"",
                             profilePic : userSnap.get("profilePic") || "",
                             publicRSAKey: userSnap.get("publicRSAKey"),
@@ -85,30 +90,6 @@ function firebaseApis(
             }
 
             )
-        },
-
-        getCurrentUser : (uid)=>{
-            return new Promise((resolve,reject)=>{
-                const userRef = doc(db,usersCollection,uid) 
-                getDoc(userRef)
-                .then((userSnap)=>{
-                    if (!userSnap.exists()) {
-                        console.error("No such user!");
-                        return reject(new Error("No such user!"));
-                    }
-                    const userData = {
-                        username: userSnap.get("username") || "",
-                        uniqueId: userSnap.get("uniqueId") || "",
-                        profilePic: userSnap.get("profilePic") || "",
-                        publicRSAKey: userSnap.get("publicRSAKey"),
-                        privateEncryptedRSAKey: userSnap.get("privateEncryptedRSAKey"),
-                        salt: userSnap.get("salt"),
-                        docId: uid,
-                    }
-                    resolve(userData);
-                })
-            })
-            
         }
     }
 
