@@ -92,16 +92,68 @@ const EncryptionService = (() => {
   };
 
 
-
   const aesEncrypt = (dataString, key) => {
     const iv = new Uint8Array(16);
     const dataBuffer = encoder.encode(dataString)
     return crypto.subtle.encrypt({ name: "AES-CBC", iv }, key, dataBuffer);
   };
 
-  const aesDecrypt = (encryptedBuffer, key) => {
+  const aesEncryptMessages = async (dataString, rawKeyBytes) => {
     const iv = new Uint8Array(16);
-    return crypto.subtle.decrypt({ name: "AES-CBC", iv }, key, encryptedBuffer);
+    const dataBuffer = encoder.encode(dataString)
+    const key = await crypto.subtle.importKey(
+      "raw",
+      rawKeyBytes.buffer.slice(rawKeyBytes.byteOffset, rawKeyBytes.byteOffset + rawKeyBytes.byteLength),
+      { name: "AES-CBC" },
+      true,
+      ["encrypt"]
+    );
+    const encryptedBuffer = await crypto.subtle.encrypt(
+      { name: "AES-CBC", iv },
+      key,
+      dataBuffer
+    );
+
+    return new Uint8Array(encryptedBuffer);
+  };
+
+  // const aesDecrypt = async (encryptedBuffer, key) => {
+  //   const cryptoKey = await importAESKey(key);
+  //   const iv = new Uint8Array(16);
+  //   return crypto.subtle.decrypt({ name: "AES-CBC", iv }, cryptoKey, encryptedBuffer);
+  // };
+
+  const aesDecrypt = async (encryptedBase64, rawAesKeyBytes) => {
+    // 1. Convert encrypted Base64 string → Uint8Array
+    const ciphertextBytes = stringToByteArray(encryptedBase64);
+
+    // 2. Import AES key
+    const aesKey = await crypto.subtle.importKey(
+      "raw",
+      rawAesKeyBytes.buffer.slice(
+        rawAesKeyBytes.byteOffset,
+        rawAesKeyBytes.byteOffset + rawAesKeyBytes.byteLength
+      ),
+      { name: "AES-CBC" },
+      true,
+      ["decrypt"]
+    );
+
+    // 3. Prepare IV (16-byte zeroed, same as Android default)
+    const iv = new Uint8Array(16);
+
+    // 4. Decrypt ciphertext
+    const decryptedBuffer = await crypto.subtle.decrypt(
+      { name: "AES-CBC", iv },
+      aesKey,
+      ciphertextBytes.buffer.slice(
+        ciphertextBytes.byteOffset,
+        ciphertextBytes.byteOffset + ciphertextBytes.byteLength
+      )
+    );
+
+    // 5. Convert decrypted ArrayBuffer → UTF-8 string
+    return new TextDecoder().decode(decryptedBuffer);
   };
 
   const generateAESKeyFromPassword = (password, salt) => {
@@ -154,7 +206,8 @@ const EncryptionService = (() => {
     aesDecrypt,
     generateAESKeyFromPassword,
     encryptPrivateKeyWithPassword,
-    decryptPrivateKeyWithPassword
+    decryptPrivateKeyWithPassword,
+    aesEncryptMessages
   };
 })();
 

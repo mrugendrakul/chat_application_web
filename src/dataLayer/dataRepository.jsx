@@ -6,6 +6,7 @@ import User from "../dataLayer/User.jsx";
 import { deleteKeyFromBrowser, getKeyFromBrowser, saveKeyToBrowser } from "./keyStorage.js";
 import { data } from "react-router";
 import AESKeyData from "./AESKeyData.jsx";
+import Message from "./Message.jsx";
 
 
 function generateSixDigitUUID(n) {
@@ -267,6 +268,35 @@ function DataRepository(
                         reject(error)
                     })
             })
+
+        },
+
+        sendMessage:async(
+            message = Message(),
+            chatId,
+            secureAESKey,
+            
+        )=>{
+            return new Promise(async (resolve,reject)=>{try{
+                const secureAesArray = EncryptionService.stringToByteArray(secureAESKey)
+                const encryptedMessageContent = await EncryptionService.aesEncryptMessages(
+                    message.content,secureAesArray
+                )
+                const encryptedMessageString = await EncryptionService.byteArrayToString(encryptedMessageContent)
+                const encyMessage = Message(
+                    message.messageId,encryptedMessageString,message.contentType,message.senderId
+                    ,message.timeStamp,message.status
+                )
+                firebaseApis().sendNewMessage(encyMessage,chatId,encryptedMessageString)
+                .then((messageId)=>{
+                    console.log("Message id data",messageId)
+                     resolve(messageId)
+                })
+            }catch(e){
+                console.error("Error sending message datarepo",e)
+                reject(e)
+                
+            }})
 
         }
     }

@@ -4,6 +4,8 @@ import { useLocation, useNavigate } from 'react-router'
 import { auth } from './firebaseUtils/initFirebase.jsx'
 import DataRepository from './dataLayer/dataRepository.jsx';
 import EncryptionService from './dataLayer/encryptionService.jsx';
+import Message, { ContentType, MessageStatus } from './dataLayer/Message.jsx';
+import { Timestamp } from 'firebase/firestore';
 
 function MainChatApp() {
     const { state } = useLocation();
@@ -13,7 +15,9 @@ function MainChatApp() {
     const [text,setText] = useState("");
     // const user = auth.currentUser;
     const [chatName,setChatName] = useState("")
-    const [message,setMessage] = useState("")
+    const [message,setMessage] = useState("Message appears here after decryption")
+    const [key,setKey] = useState("")
+    const [encMes,setEncMes] = useState("")
     useEffect(() => {
         if (state === null) {
         console.log("No state received, this is the first time visiting this page");
@@ -101,7 +105,7 @@ function MainChatApp() {
             >
                 Create new chat name
             </button>
-            <button className="bg-green-300 p-2 m-2 transition duration-800 ease-in-out hover:shadow-lg active:inset-shadow-sm active:shadow"
+            <button className="bg-green-300 p-2 m-2 transition duration-800 ease-in-out hover:shadow-lg active:inset-shadow-sm active:shadow disabled:bg-gray-300"
             onClick={async ()=>{
                 console.log(typeof(User.privateEncryptedRSAKey))
                 // const privateKey = await EncryptionService.stringToPrivateKey(User.privateEncryptedRSAKey)
@@ -109,12 +113,68 @@ function MainChatApp() {
                     "HoaHu8AcABaTT4aR4rEbQ2lJ+CQDVUgM8O+3EMdhr1iYxAhVdj0NvdXIHtwk7+kH4Ij67XAb9D2YiGaVp87cVRs1TChKaTV5wLXRHEa3eymZf5ngrAGOYp5MHDGR1vyx3i21wkrWwGTi73lcZ9VFHF+keFhZZV0vurTpqzaodKgr2nv27xsnla0GFCUlLIMRvHGzimoLzqe81uIcb9mR03I5fy+00/hijCW95zlQYvf+Wq/sVMElKS5imJvkEZPS0fUA2HU4qoYaiDdbVlqxaHQSgnp4AVuI3JOMpFmgP/PZrITEDSwL531vBkD6dPCbpvIVzNt0/UTtxk9VlBYP5g=="
                     , User.privateEncryptedRSAKey
                 )
-                const base64Key = btoa(String.fromCharCode(...key));
+                // const base64Key = btoa(String.fromCharCode(...key));
+                const base64Key = EncryptionService.byteArrayToString(key)
                 // return base64Key;
+                setKey(base64Key)
                 console.log(base64Key)
             }}
+            disabled={key!=""}
             >
                 Get the aes key for chat
+            </button>
+            <button className="bg-blue-300 p-2 m-2 transition duration-800 ease-in-out hover:shadow-lg active:inset-shadow-sm active:shadow disabled:bg-gray-300"
+            disabled = {key==""}
+            onClick={async()=>{
+                // const message = "jDaRCBwGOO3gTjLJtl9IQsvTPbtewuYN8uACzAqqyHQTIF63SY75mO2fFcGmaItw"
+                const message = "vBhybKbWxMJRlxpU80V6XuVH2J1TAIXLz4WuyQmeUv8="
+                // const messageArray = await EncryptionService.stringToByteArray(message)
+                const arrayKey = EncryptionService.stringToByteArray(key)
+                console.log(key)
+                const decryptedMessage = await EncryptionService.aesDecrypt(
+                    message,arrayKey
+                )
+                console.log("Message got is ",decryptedMessage)
+                // const MessageString = await EncryptionService.byteArrayToString(decryptedMessage)
+                setMessage(decryptedMessage)
+            }}
+            >
+                Aes Decrypt Testing
+            </button>
+            <br/>
+            {message}
+            <br/>
+            <input type="text" className="border-2 border-gray-300 rounded-lg p-2 m-2 w-3xl"
+            value={encMes}
+            onChange={(e) => setEncMes(e.target.value)}
+            />
+            <button
+            className="bg-orange-300 p-2 m-2 transition duration-800 ease-in-out hover:shadow-lg active:inset-shadow-sm active:shadow disabled:bg-gray-300"
+            disabled= {key==""}
+            onClick = {async ()=>{
+                // const arrayKey = EncryptionService.stringToByteArray(key)
+                // console.log(arrayKey)
+                // const encryptMessage = await EncryptionService.aesEncryptMessages(
+                //     encMes,arrayKey
+                // )
+                // const stringEnyMessage = await EncryptionService.byteArrayToString(encryptMessage)
+                // console.log("Message Encrypted is ", stringEnyMessage)
+
+                // const messageId = await 
+                DataRepository().sendMessage(Message("",encMes,ContentType.text,User.username,Timestamp.now(),MessageStatus.Sending),
+                "696312966",key
+                )
+                .then((MessageId)=>{
+                    console.log("message created successfully", MessageId)
+                })
+                .catch((error)=>{
+                    console.error("Error sending message",error)
+                })
+                // console.log("Message created",messageId)
+                
+            }}
+            >
+                Send message Testing.
             </button>
         </div>
     )

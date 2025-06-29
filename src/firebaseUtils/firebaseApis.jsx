@@ -1,7 +1,8 @@
 import { getAuth } from 'firebase/auth';
 import firebaseApp from './initFirebase.jsx';
-import { arrayUnion, collection, doc, getDoc, getDocFromCache, getDocs, getFirestore, limit, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
+import { addDoc, arrayUnion, collection, doc, getDoc, getDocFromCache, getDocs, getFirestore, limit, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
 import AESKeyData from '../dataLayer/AESKeyData.jsx';
+import Message from '../dataLayer/Message.jsx';
 
 
 function chunkArray(arr, size) {
@@ -168,9 +169,9 @@ function firebaseApis(
                 const newChat = {
                     "chatId": chatId,
                     "chatName": chatName,
-                    "profilePhoto" : profilePhoto,
-                    "isGroup" : isGroup,
-                    "members" : members,
+                    "profilePhoto": profilePhoto,
+                    "isGroup": isGroup,
+                    "members": members,
                     "lastMessage": [recentMessage, Timestamp.now()],
                     "encryptedAESKeys": encryptedAESKeys
                 }
@@ -187,7 +188,7 @@ function firebaseApis(
         },
 
         getPublicRSAKeyForMemeber: (listOfMembers) => {
-            console.log("Started Getting the keys for users",listOfMembers)
+            console.log("Started Getting the keys for users", listOfMembers)
             return new Promise((resolve, reject) => {
                 const batched = chunkArray(listOfMembers, 10)
                 const RSAMemberKeys = []
@@ -199,7 +200,7 @@ function firebaseApis(
                     )
                     return getDocs(keysQuery)
                         .then((keysSnapshot) => {
-                            keysSnapshot.docs.forEach(doc=>{
+                            keysSnapshot.docs.forEach(doc => {
                                 const data = doc.data();
                                 RSAMemberKeys.push({
                                     username: data.username || "",
@@ -207,22 +208,60 @@ function firebaseApis(
                                 })
                             })
                         })
-                        
+
                 })
-                
+
                 Promise.all(batchPromises)
-                .then(()=>{
-                    resolve(RSAMemberKeys);
-                })
-                .catch((error)=>{
-                    console.error("Error getting keys",error)
-                    reject(error)
-                })
+                    .then(() => {
+                        resolve(RSAMemberKeys);
+                    })
+                    .catch((error) => {
+                        console.error("Error getting keys", error)
+                        reject(error)
+                    })
             })
         },
 
-        sendNewMessage:()=>{
-            
+        sendNewMessage: async (
+            message = Message(),
+            chatId,
+            recentMessage
+        ) => {
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error("Timeout while sending message")), 5000)
+            })
+
+            const sendMessagePromise = (async () => {
+                try {
+                    const lastMessage = [
+                        recentMessage, message.timeStamp, message.senderId
+                    ]
+
+                    const messageRef = collection(db,chatsCollectinName,chatId,"Messages")
+
+                    const docRef = await addDoc(messageRef,message)
+                    const messageId = docRef.id
+
+                    const chatDataRef = doc(db,chatsCollectinName,chatId)
+                    await updateDoc(chatDataRef,{lastMessage})
+
+                    console.log("Message send successfully and updated chat",messageId)
+                    return messageId
+
+                } catch (e) {
+                    console.error("Error sending message", e)
+                    return ""
+                }
+            })()
+
+            try{
+                return await Promise.race([sendMessagePromise,timeoutPromise])
+            }
+            catch(e){
+                console.error("Error sending message",e)
+                return `${e}`
+            }
+
         }
     }
 
