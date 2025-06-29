@@ -46,8 +46,9 @@ function SignupScreen() {
     };
 
     const submitForm = (e) => {
-        e.preventDefault();
         setIsLoading(true);
+        e.preventDefault();
+        
         // createUserWithEmailAndPassword(auth, formData.email, formData.password)
         //     .then((userCredential) => {
         //         const user = userCredential.user;

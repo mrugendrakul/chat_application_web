@@ -4,6 +4,8 @@ import firebaseApp from '../firebaseUtils/initFirebase.jsx';
 import EncryptionService from "./encryptionService.jsx";
 import User from "../dataLayer/User.jsx";
 import { deleteKeyFromBrowser, getKeyFromBrowser, saveKeyToBrowser } from "./keyStorage.js";
+import { data } from "react-router";
+import AESKeyData from "./AESKeyData.jsx";
 
 
 function generateSixDigitUUID(n) {
@@ -112,23 +114,23 @@ function DataRepository(
                             keyId: "1",
                             publicKey: userLogIn.publicRSAKey,
                             privateKey: userLogIn.privateEncryptedRSAKey
-                        }),userLogIn]
-                        
+                        }), userLogIn]
+
                     })
                     .then(([browserKeyStatus, userLogIn]) => {
                         // console.log("Keys saved to browser storage", browserKeyStatus);
                         browserKeyStatus
-                        .then((browserKeyStatus) => {
-                            console.log("Keys saved to browser storage", browserKeyStatus);
-                            // return {browserKeyStatus, userLogIn}; 
-                            resolve([userLogIn,browserKeyStatus])
-                        })
-                        .catch((error) => {
-                            console.error("Error saving keys to browser storage", error);
-                            return [error, false]; 
-                        })
-                        
-                        
+                            .then((browserKeyStatus) => {
+                                console.log("Keys saved to browser storage", browserKeyStatus);
+                                // return {browserKeyStatus, userLogIn}; 
+                                resolve([userLogIn, browserKeyStatus])
+                            })
+                            .catch((error) => {
+                                console.error("Error saving keys to browser storage", error);
+                                return [error, false];
+                            })
+
+
                     })
                     .catch((error) => {
                         console.error("Error logging in", error);
@@ -138,42 +140,134 @@ function DataRepository(
             })
         },
 
-        getCurrentUser:()=>{
-            return new Promise((resolve,reject)=>{
+        getCurrentUser: () => {
+            return new Promise((resolve, reject) => {
                 const currentUser = auth.currentUser
                 getKeyFromBrowser("1")
-                .then((browswerKeys)=>{
-                    console.log("Getting key from browser")
-                    const curUser = User({
-                        username: currentUser.email,
-                        docId: currentUser.uid,
-                        publicRSAKey: browswerKeys.publicKey,
-                        privateEncryptedRSAKey: browswerKeys.privateKey,
-                        isMigrated: true
+                    .then((browswerKeys) => {
+                        console.log("Getting key from browser")
+                        const curUser = User({
+                            username: currentUser.email,
+                            docId: currentUser.uid,
+                            publicRSAKey: browswerKeys.publicKey,
+                            privateEncryptedRSAKey: browswerKeys.privateKey,
+                            isMigrated: true
+                        })
+                        resolve(curUser)
                     })
-                    resolve (curUser)
-                })
-                .catch((error)=>{
-                    console.error("Error getting user",error)
-                    reject(error)
-                })
+                    .catch((error) => {
+                        console.error("Error getting user", error)
+                        reject(error)
+                    })
             })
         },
 
-        logoutUser:()=>{
-            return new Promise((resolve, reject)=>{
+        logoutUser: () => {
+            return new Promise((resolve, reject) => {
                 deleteKeyFromBrowser("1")
-                .then((status)=>{
-                    if(status){
-                        return signOut(auth)
-                    }
+                    .then((status) => {
+                        if (status) {
+                            return signOut(auth)
+                        }
 
-                })
-                .then((uStatus)=>{
-                    console.log("User signouted")
-                    resolve(uStatus)
-                })
+                    })
+                    .then((uStatus) => {
+                        console.log("User signouted")
+                        resolve(uStatus)
+                    })
             })
+        },
+
+        getSearchUsersForChat: (searchUsername, currentUsername) => {
+            return new Promise((resolve, reject) => {
+                firebaseApis().getSearchUsers(searchUsername, currentUsername)
+                    .then((users) => {
+                        console.log("Got the results data")
+                        resolve(users)
+                    })
+                    .catch((error) => {
+                        console.error("Error getting serch result Datarepo : ", error)
+                        reject(error)
+                    })
+            })
+        },
+
+        createNewChatDataRepo: (
+            currentUser = User(),
+            memberUsers = [],
+            chatName,
+
+            profilePhoto,
+            isGroup,
+        ) => {
+            memberUsers.push(currentUser.username)
+            console.log("Chat addition started for members,",memberUsers)
+            const chatId = generateSixDigitUUID(24)
+            return new Promise((resolve, reject) => {
+                EncryptionService.generateAESKey()
+                    .then((commonAesKey) => {
+                        return commonAesKey
+                    })
+                    .then((commonAesKey) => {
+                        return Promise.all([
+                            firebaseApis().getPublicRSAKeyForMemeber(memberUsers),
+                            Promise.resolve(commonAesKey)
+                        ])
+                    })
+                    .then(async ([publicKeys, commonAesKey]) => {
+                        // const array = []
+                        // array.map
+                        // var publicKeys = []
+                        // const AesKeys = []
+                        const recentMessageBuffer = await EncryptionService.aesEncrypt(
+                            "No Message send, start chatting now!!",
+                            commonAesKey
+                        )
+                        const recentMessageEncrypted = await EncryptionService.byteArrayToString(recentMessageBuffer)
+                        console.log("Key data is ", publicKeys)
+                        console.log("Some information :", recentMessageEncrypted, commonAesKey)
+                        const AesKeys = await Promise.all(
+                            publicKeys.map(async (key) => {
+                                // console.log(key.username, key.key)
+                                const encryptedKeyBytes = await EncryptionService.encryptAESKeyWithPublicKey(
+                                            commonAesKey,
+                                            EncryptionService.stringToPublicKey(key.key)
+                                        )
+                                return AESKeyData({
+                                    username: key.username,
+                                    key: EncryptionService.byteArrayToString(
+                                        encryptedKeyBytes
+                                    )
+                                })
+                            })
+                        )
+                        console.log("Adding my key to backend", AesKeys)
+                        // const encryptedKeyBytes = await EncryptionService.encryptAESKeyWithPublicKey(
+                        //                     commonAesKey,
+                        //                     EncryptionService.stringToPublicKey(key.key)
+                        //                 )
+                        //         const myAeskey = AESKeyData({
+                        //             username: key.username,
+                        //             key: EncryptionService.byteArrayToString(
+                        //                 encryptedKeyBytes
+                        //             )
+                        //         })
+
+                        firebaseApis().createNewChat(
+                            memberUsers, chatName, chatId, profilePhoto, isGroup, AesKeys, recentMessageEncrypted
+                        ).then((response) => {
+                            console.log("Congratulation you added chat to backend")
+                            resolve(response)
+                        })
+
+                    })
+
+                    .catch((error) => {
+                        console.error("No chat created try again : ", error)
+                        reject(error)
+                    })
+            })
+
         }
     }
 }

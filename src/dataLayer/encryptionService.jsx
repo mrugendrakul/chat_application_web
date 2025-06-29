@@ -1,5 +1,6 @@
 import { Buffer } from 'buffer';
 import NodeRSA from "node-rsa";
+import AESKeyData from './AESKeyData';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -30,29 +31,29 @@ const EncryptionService = (() => {
 
   const stringToAESKey = (keyStr) => {
     const raw = stringToByteArray(keyStr);
-    return crypto.subtle.importKey("raw", raw, "AES-CBC", true, ["encrypt","decrypt"]);
+    return crypto.subtle.importKey("raw", raw, "AES-CBC", true, ["encrypt", "decrypt"]);
   };
 
-const generateRSAKeyPair = () => {
-  const key = new NodeRSA({ b: 2048, environment: 'browser' });
-  key.setOptions({ encryptionScheme: 'pkcs1' });
+  const generateRSAKeyPair = () => {
+    const key = new NodeRSA({ b: 2048, environment: 'browser' });
+    key.setOptions({ encryptionScheme: 'pkcs1' });
 
-  // Export keys including headers
-  const publicPem = key.exportKey('pkcs8-public-pem');
-  const privatePem = key.exportKey('pkcs1-private-pem');
+    // Export keys including headers
+    const publicPem = key.exportKey('pkcs8-public-pem');
+    const privatePem = key.exportKey('pkcs8-private-pem');
 
-  // Strip PEM header/footer and whitespace in one go
-  const clean = pem =>
-    pem
-      .replace(/-----BEGIN [\w\s]+-----/, '')
-      .replace(/-----END [\w\s]+-----/, '')
-      .replace(/\s+/g, '');
+    // Strip PEM header/footer and whitespace in one go
+    const clean = pem =>
+      pem
+        .replace(/-----BEGIN [\w\s]+-----/, '')
+        .replace(/-----END [\w\s]+-----/, '')
+        .replace(/\s+/g, '');
 
-  return {
-    publicKey: clean(publicPem),
-    privateKey: clean(privatePem),
+    return {
+      publicKey: clean(publicPem),
+      privateKey: clean(privatePem),
+    };
   };
-};
 
   const publicKeyToString = (publicKeyPem) => publicKeyPem;
   const privateKeyToString = (privateKeyPem) => privateKeyPem;
@@ -60,19 +61,41 @@ const generateRSAKeyPair = () => {
   const stringToPublicKey = (publicPem) => publicPem;
   const stringToPrivateKey = (privatePem) => privatePem;
 
-  const encryptAESKeyWithPublicKey = (aesRawBytes, publicKeyPem) => {
-    const rsa = new NodeRSA(publicKeyPem, "pkcs8-public-pem", { encryptionScheme: "pkcs1" });
-    return rsa.encrypt(Buffer.from(aesRawBytes));
+  const encryptAESKeyWithPublicKey = async (secretKey, publicKeyPem) => {
+    // Export AES CryptoKey to raw bytes
+    const rawKey = await crypto.subtle.exportKey("raw", secretKey); // ArrayBuffer
+    const rawKeyBuffer = Buffer.from(rawKey); // Convert to Node.js Buffer
+
+    // Format the PEM string correctly if not already
+    const formattedPem = `-----BEGIN PUBLIC KEY-----\n${publicKeyPem}\n-----END PUBLIC KEY-----`;
+
+    // Create NodeRSA instance with proper scheme
+    const rsa = new NodeRSA(formattedPem, 'pkcs8-public-pem', {
+      encryptionScheme: 'pkcs1' // Matches "RSA/ECB/PKCS1Padding"
+    });
+
+    // Encrypt the AES key
+    const encrypted = rsa.encrypt(rawKeyBuffer); // Returns Buffer
+
+    return encrypted; // Return Buffer (or convert to Base64 if needed)
   };
 
   const decryptAESKeyWithPrivateKey = (encryptedKeyBytes, privateKeyPem) => {
-    const rsa = new NodeRSA(privateKeyPem, "pkcs1-private-pem", { encryptionScheme: "pkcs1" });
-    const decrypted = rsa.decrypt(Buffer.from(encryptedKeyBytes));
+    const formattedPem = `-----BEGIN PRIVATE KEY-----\n${privateKeyPem}\n-----END PRIVATE KEY-----`;
+
+    const rsa = new NodeRSA(formattedPem, "pkcs8-private-pem", {
+      encryptionScheme: "pkcs1",
+    });
+
+    const decrypted = rsa.decrypt(Buffer.from(encryptedKeyBytes, "base64"));
     return new Uint8Array(decrypted);
   };
 
-  const aesEncrypt = (dataBuffer, key) => {
+
+
+  const aesEncrypt = (dataString, key) => {
     const iv = new Uint8Array(16);
+    const dataBuffer = encoder.encode(dataString)
     return crypto.subtle.encrypt({ name: "AES-CBC", iv }, key, dataBuffer);
   };
 
