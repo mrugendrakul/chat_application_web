@@ -62,7 +62,7 @@ function MainChatApp() {
 
     const CreateNewChat = ()=>{
         DataRepository().createNewChatDataRepo(
-            User,["emu@123.com"],chatName,"",false
+            User,["mrugendraskulkarni@gmail.com"],chatName,"",false
         )
         .then((Response)=>{
             console.log(Response)
@@ -107,10 +107,11 @@ function MainChatApp() {
             </button>
             <button className="bg-green-300 p-2 m-2 transition duration-800 ease-in-out hover:shadow-lg active:inset-shadow-sm active:shadow disabled:bg-gray-300"
             onClick={async ()=>{
-                console.log(typeof(User.privateEncryptedRSAKey))
+                console.log(User.privateEncryptedRSAKey)
                 // const privateKey = await EncryptionService.stringToPrivateKey(User.privateEncryptedRSAKey)
                 const key = await EncryptionService.decryptAESKeyWithPrivateKey(
-                    "HoaHu8AcABaTT4aR4rEbQ2lJ+CQDVUgM8O+3EMdhr1iYxAhVdj0NvdXIHtwk7+kH4Ij67XAb9D2YiGaVp87cVRs1TChKaTV5wLXRHEa3eymZf5ngrAGOYp5MHDGR1vyx3i21wkrWwGTi73lcZ9VFHF+keFhZZV0vurTpqzaodKgr2nv27xsnla0GFCUlLIMRvHGzimoLzqe81uIcb9mR03I5fy+00/hijCW95zlQYvf+Wq/sVMElKS5imJvkEZPS0fUA2HU4qoYaiDdbVlqxaHQSgnp4AVuI3JOMpFmgP/PZrITEDSwL531vBkD6dPCbpvIVzNt0/UTtxk9VlBYP5g=="
+                    "e9Oh+WF3Oeqcj5h3RwJPWCW/tcrCU6Bcd4zv/NQKt/3wyvf44i+tMRO/pfnDbgPYR6Npeo8hkZUdgrE47BzXFsZkzBpCQePNI1Xtt6/Ly5Uy+d5SqpMSWHZk33+K+SxhJ1SHtfsv5kd8AxntUBVYYxtxlPKuqKBSk4XSkuIcggIDFAo9hHUydh9Q4rB11079WdUlEaGZtCBnNwhLLPx8ISfE08yh5Sf5rz+ODq8gfSTFTJyiL9IfFuBOLXn+L5DTcABRVfsycz5o2quHf89mU4NgaJ/RTcYlSJfZMMU+p8WUN0GE72p7rhiBnwaNBcIOz8r+qtOEMCABBmrF8uNfPg=="
+                
                     , User.privateEncryptedRSAKey
                 )
                 // const base64Key = btoa(String.fromCharCode(...key));
@@ -127,7 +128,7 @@ function MainChatApp() {
             disabled = {key==""}
             onClick={async()=>{
                 // const message = "jDaRCBwGOO3gTjLJtl9IQsvTPbtewuYN8uACzAqqyHQTIF63SY75mO2fFcGmaItw"
-                const message = "vBhybKbWxMJRlxpU80V6XuVH2J1TAIXLz4WuyQmeUv8="
+                const message = "WmpK1LDpcVoW70CCOS3Knhf+qbAHEYv/bDrrQZaoANQvbbVHz3cyL7vdkrPLD61c"
                 // const messageArray = await EncryptionService.stringToByteArray(message)
                 const arrayKey = EncryptionService.stringToByteArray(key)
                 console.log(key)
@@ -162,7 +163,7 @@ function MainChatApp() {
 
                 // const messageId = await 
                 DataRepository().sendMessage(Message("",encMes,ContentType.text,User.username,Timestamp.now(),MessageStatus.Sending),
-                "696312966",key
+                "1211553253",key
                 )
                 .then((MessageId)=>{
                     console.log("message created successfully", MessageId)

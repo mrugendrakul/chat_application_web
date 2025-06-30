@@ -3,6 +3,7 @@ import firebaseApp from './initFirebase.jsx';
 import { addDoc, arrayUnion, collection, doc, getDoc, getDocFromCache, getDocs, getFirestore, limit, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
 import AESKeyData from '../dataLayer/AESKeyData.jsx';
 import Message from '../dataLayer/Message.jsx';
+import ChatOrGroup, { lastMessageData } from '../dataLayer/ChatOrGroup.jsx';
 
 
 function chunkArray(arr, size) {
@@ -237,15 +238,15 @@ function firebaseApis(
                         recentMessage, message.timeStamp, message.senderId
                     ]
 
-                    const messageRef = collection(db,chatsCollectinName,chatId,"Messages")
+                    const messageRef = collection(db, chatsCollectinName, chatId, "Messages")
 
-                    const docRef = await addDoc(messageRef,message)
+                    const docRef = await addDoc(messageRef, message)
                     const messageId = docRef.id
 
-                    const chatDataRef = doc(db,chatsCollectinName,chatId)
-                    await updateDoc(chatDataRef,{lastMessage})
+                    const chatDataRef = doc(db, chatsCollectinName, chatId)
+                    await updateDoc(chatDataRef, { lastMessage })
 
-                    console.log("Message send successfully and updated chat",messageId)
+                    console.log("Message send successfully and updated chat", messageId)
                     return messageId
 
                 } catch (e) {
@@ -254,17 +255,53 @@ function firebaseApis(
                 }
             })()
 
-            try{
-                return await Promise.race([sendMessagePromise,timeoutPromise])
+            try {
+                return await Promise.race([sendMessagePromise, timeoutPromise])
             }
-            catch(e){
-                console.error("Error sending message",e)
+            catch (e) {
+                console.error("Error sending message", e)
                 return `${e}`
             }
 
+        },
+
+        getChatData: (chatId, username) => {
+            return new Promise((resolve, reject) => {
+                console.log("Getting chatData started")
+                const chatDataDoc = doc(db, chatsCollectinName, chatId)
+                getDoc(chatDataDoc)
+                    .then((chatDoc) => {
+                        const chatData = chatDoc.data()
+                        const aesKeys = chatData.encryptedAESKeys || null
+                        // const arrayTest = []
+
+                        if (aesKeys != null) {
+                            console.log("Got the keys")
+                            const myAeskey = aesKeys.filter((key) => {
+                                key.username == username
+                            })[0]
+                            
+                            resolve(
+                                ChatOrGroup(
+                                    chatId,
+                                    chatData.chatName,
+                                    chatData.isGroup,
+                                    chatData.members,
+                                    "",
+                                    null,
+                                    lastMessageData("","",""),
+                                    chatData.key
+                                )
+                            )
+                        }
+                        else {
+                            console.error("Unable to get the key")
+                            reject(new Error("No key in the chat backend"))
+                        }
+                    })
+            })
         }
     }
-
 
 
 

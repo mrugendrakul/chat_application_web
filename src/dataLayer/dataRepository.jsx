@@ -202,7 +202,7 @@ function DataRepository(
             isGroup,
         ) => {
             memberUsers.push(currentUser.username)
-            console.log("Chat addition started for members,",memberUsers)
+            console.log("Chat addition started for members,", memberUsers)
             const chatId = generateSixDigitUUID(24)
             return new Promise((resolve, reject) => {
                 EncryptionService.generateAESKey()
@@ -231,9 +231,9 @@ function DataRepository(
                             publicKeys.map(async (key) => {
                                 // console.log(key.username, key.key)
                                 const encryptedKeyBytes = await EncryptionService.encryptAESKeyWithPublicKey(
-                                            commonAesKey,
-                                            EncryptionService.stringToPublicKey(key.key)
-                                        )
+                                    commonAesKey,
+                                    EncryptionService.stringToPublicKey(key.key)
+                                )
                                 return AESKeyData({
                                     username: key.username,
                                     key: EncryptionService.byteArrayToString(
@@ -271,32 +271,37 @@ function DataRepository(
 
         },
 
-        sendMessage:async(
+        sendMessage: async (
             message = Message(),
             chatId,
             secureAESKey,
-            
-        )=>{
-            return new Promise(async (resolve,reject)=>{try{
-                const secureAesArray = EncryptionService.stringToByteArray(secureAESKey)
-                const encryptedMessageContent = await EncryptionService.aesEncryptMessages(
-                    message.content,secureAesArray
-                )
-                const encryptedMessageString = await EncryptionService.byteArrayToString(encryptedMessageContent)
-                const encyMessage = Message(
-                    message.messageId,encryptedMessageString,message.contentType,message.senderId
-                    ,message.timeStamp,message.status
-                )
-                firebaseApis().sendNewMessage(encyMessage,chatId,encryptedMessageString)
-                .then((messageId)=>{
-                    console.log("Message id data",messageId)
-                     resolve(messageId)
-                })
-            }catch(e){
-                console.error("Error sending message datarepo",e)
-                reject(e)
-                
-            }})
+
+        ) => {
+            return new Promise((resolve, reject) => {
+                try {
+                    const secureAesArray = EncryptionService.stringToByteArray(secureAESKey)
+                    EncryptionService.aesEncryptMessages(
+                        message.content, secureAesArray
+                    )
+                        .then((encryptedMessageContent) => {
+
+                            const encryptedMessageString = EncryptionService.byteArrayToString(encryptedMessageContent)
+                            const encyMessage = Message(
+                                message.messageId, encryptedMessageString, message.contentType, message.senderId
+                                , message.timeStamp, message.status
+                            )
+                            firebaseApis().sendNewMessage(encyMessage, chatId, encryptedMessageString)
+                                .then((messageId) => {
+                                    console.log("Message id data", messageId)
+                                    resolve(messageId)
+                                })
+                        })
+                } catch (e) {
+                    console.error("Error sending message datarepo", e)
+                    reject(e)
+
+                }
+            })
 
         }
     }
