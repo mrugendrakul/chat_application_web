@@ -1,9 +1,9 @@
 import { getAuth } from 'firebase/auth';
 import firebaseApp from './initFirebase.jsx';
-import { addDoc, arrayUnion, collection, doc, getDoc, getDocFromCache, getDocs, getFirestore, limit, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
+import { addDoc, arrayUnion, collection, doc, getDoc, getDocFromCache, getDocs, getFirestore, limit, onSnapshot, Query, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
 import AESKeyData from '../dataLayer/AESKeyData.jsx';
 import Message from '../dataLayer/Message.jsx';
-import ChatOrGroup, { lastMessageData } from '../dataLayer/ChatOrGroup.jsx';
+import ChatOrGroup, { chatUser, lastMessageData } from '../dataLayer/ChatOrGroup.jsx';
 
 
 function chunkArray(arr, size) {
@@ -13,7 +13,7 @@ function chunkArray(arr, size) {
     }
     return chunks;
 }
-
+let ListenChats = null
 
 function firebaseApis(
     db = getFirestore(firebaseApp),
@@ -276,10 +276,11 @@ function firebaseApis(
                         // const arrayTest = []
 
                         if (aesKeys != null) {
-                            console.log("Got the keys")
-                            const myAeskey = aesKeys.filter((key) => {
-                                key.username == username
-                            })[0]
+                            console.log("Got the keys",chatData)
+                            const myAeskey = aesKeys.filter((key) => 
+                                key.username === username
+                            )[0]
+                            console.log("My key in api",myAeskey.username)
                             
                             resolve(
                                 ChatOrGroup(
@@ -290,7 +291,7 @@ function firebaseApis(
                                     "",
                                     null,
                                     lastMessageData("","",""),
-                                    chatData.key
+                                    myAeskey.key
                                 )
                             )
                         }
@@ -300,6 +301,148 @@ function firebaseApis(
                         }
                     })
             })
+        },
+
+        getUserChatData : (username)=>{
+            console.log("Called getUserChat Data for ",username)
+           return new Promise((resolve,reject)=>{
+             const userDocument = collection(db,usersCollectionName)
+            const userQuery = query(
+                userDocument,
+                where("username","==",username)
+            )
+            getDocs(userQuery)
+            .then((userSnapshot)=>{
+                const result = userSnapshot.docs[0].data()
+                // console.log("user chat data",result)
+                resolve(
+                    chatUser(
+                        result.username,
+                        result.fcmToken,
+                        result.profilePic
+                    )
+                )
+            })
+            .catch((error)=>{
+                console.error("Error getting user chatData",error)
+                reject(error)
+            })
+           })
+        },
+        
+        
+        /**
+         * 
+         * @param {String} username    
+         * @param {Boolean} isGroup 
+         * @param {(ChatOrGroup)=>{}} onAddChat 
+         * @param {(ChatOrGroup)=>{}} onModifiedChat 
+         * @param {(ChatOrGroup)=>{}} onDeleteChat 
+         * @param {(Error)=>{}} onError 
+         */
+        getLiveChatsOrGroups(
+            username,
+            isGroup,
+            onAddChat  ,
+            onModifiedChat ,
+            onDeleteChat ,
+            onError
+        ){
+            ListenChats = null
+            const chatscoll = collection(db,chatsCollectinName)
+            const chatsQuery = query(
+                chatscoll,
+                where("members","array-contains",username),
+                where("isGroup","==",isGroup)                
+            ) 
+            ListenChats = onSnapshot(chatsQuery,(snapshot)=>{
+                snapshot.docChanges().forEach((change)=>{
+                    if(change.type === 'added'){
+                        console.log("add chat", change.doc.data())
+                        const chatData = change.doc.data()
+                        const chatLastMessage = chatData.lastMessage
+                        const lastMessage = lastMessageData(
+                            chatLastMessage[2] || "",
+                            chatLastMessage[0],
+                            lastMessageData[1]
+                        )
+                        const chatAesKey = chatData.encryptedAESKeys
+                        const mySecureAesKey = chatAesKey.filter((key) => 
+                                key.username === username
+                            )[0]
+                        const addChat = ChatOrGroup(
+                            chatData.chatId,
+                            chatData.chatName,
+                            chatData.isGroup,
+                            chatData.members,
+                            chatData.chatPic,
+                            chatData.memberData,
+                            lastMessage,
+                            mySecureAesKey
+                            
+                        )
+                        onAddChat(addChat)
+                    }
+                    if(change.type === 'modified'){
+                        // console.log("modified chat", change.doc.data())
+                        const chatData = change.doc.data()
+                        const chatLastMessage = chatData.lastMessage
+                        const lastMessage = lastMessageData(
+                            chatLastMessage[2] || "",
+                            chatLastMessage[0],
+                            lastMessageData[1]
+                        )
+                        const chatAesKey = chatData.encryptedAESKeys
+                        const mySecureAesKey = chatAesKey.filter((key) => 
+                                key.username === username
+                            )[0]
+                        const addChat = ChatOrGroup(
+                            chatData.chatId,
+                            chatData.chatName,
+                            chatData.isGroup,
+                            chatData.members,
+                            chatData.chatPic,
+                            chatData.memberData,
+                            lastMessage,
+                            mySecureAesKey
+                            
+                        )
+                        onModifiedChat(addChat)
+                    }
+                    if(change.type === 'removed'){
+                        console.log("remove chat", change.doc.data())
+                        const chatData = change.doc.data()
+                        const chatLastMessage = chatData.lastMessage
+                        const lastMessage = lastMessageData(
+                            chatLastMessage[2] || "",
+                            chatLastMessage[0],
+                            lastMessageData[1]
+                        )
+                        const chatAesKey = chatData.encryptedAESKeys
+                        const mySecureAesKey = chatAesKey.filter((key) => 
+                                key.username === username
+                            )[0]
+                        const addChat = ChatOrGroup(
+                            chatData.chatId,
+                            chatData.chatName,
+                            chatData.isGroup,
+                            chatData.members,
+                            chatData.chatPic,
+                            chatData.memberData,
+                            lastMessage,
+                            mySecureAesKey
+                            
+                        )
+                        onDeleteChat(addChat)
+                    }
+                })
+            },
+            (error)=>{
+                console.error("Unable to start the listening",error)
+                onError(error)
+                ListenChats()
+            }
+        )
         }
     }
 
@@ -307,4 +450,8 @@ function firebaseApis(
 
 }
 
+// firebaseApis().getChatData("696312966","mrugen@123.com")
+// .then((chatDat)=>{
+//     console.log("REsult",chatDat)
+// })
 export default firebaseApis

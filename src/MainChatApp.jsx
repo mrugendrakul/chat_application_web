@@ -106,29 +106,39 @@ function MainChatApp() {
                 Create new chat name
             </button>
             <button className="bg-green-300 p-2 m-2 transition duration-800 ease-in-out hover:shadow-lg active:inset-shadow-sm active:shadow disabled:bg-gray-300"
-            onClick={async ()=>{
-                console.log(User.privateEncryptedRSAKey)
-                // const privateKey = await EncryptionService.stringToPrivateKey(User.privateEncryptedRSAKey)
-                const key = await EncryptionService.decryptAESKeyWithPrivateKey(
-                    "e9Oh+WF3Oeqcj5h3RwJPWCW/tcrCU6Bcd4zv/NQKt/3wyvf44i+tMRO/pfnDbgPYR6Npeo8hkZUdgrE47BzXFsZkzBpCQePNI1Xtt6/Ly5Uy+d5SqpMSWHZk33+K+SxhJ1SHtfsv5kd8AxntUBVYYxtxlPKuqKBSk4XSkuIcggIDFAo9hHUydh9Q4rB11079WdUlEaGZtCBnNwhLLPx8ISfE08yh5Sf5rz+ODq8gfSTFTJyiL9IfFuBOLXn+L5DTcABRVfsycz5o2quHf89mU4NgaJ/RTcYlSJfZMMU+p8WUN0GE72p7rhiBnwaNBcIOz8r+qtOEMCABBmrF8uNfPg=="
+            onClick={ ()=>{
+                // console.log(User.privateEncryptedRSAKey)
+                // // const privateKey = await EncryptionService.stringToPrivateKey(User.privateEncryptedRSAKey)
+                // const key = await EncryptionService.decryptAESKeyWithPrivateKey(
+                //     "e9Oh+WF3Oeqcj5h3RwJPWCW/tcrCU6Bcd4zv/NQKt/3wyvf44i+tMRO/pfnDbgPYR6Npeo8hkZUdgrE47BzXFsZkzBpCQePNI1Xtt6/Ly5Uy+d5SqpMSWHZk33+K+SxhJ1SHtfsv5kd8AxntUBVYYxtxlPKuqKBSk4XSkuIcggIDFAo9hHUydh9Q4rB11079WdUlEaGZtCBnNwhLLPx8ISfE08yh5Sf5rz+ODq8gfSTFTJyiL9IfFuBOLXn+L5DTcABRVfsycz5o2quHf89mU4NgaJ/RTcYlSJfZMMU+p8WUN0GE72p7rhiBnwaNBcIOz8r+qtOEMCABBmrF8uNfPg=="
                 
-                    , User.privateEncryptedRSAKey
-                )
-                // const base64Key = btoa(String.fromCharCode(...key));
-                const base64Key = EncryptionService.byteArrayToString(key)
-                // return base64Key;
-                setKey(base64Key)
-                console.log(base64Key)
+                //     , User.privateEncryptedRSAKey
+                // )
+                // // const base64Key = btoa(String.fromCharCode(...key));
+                // const base64Key = EncryptionService.byteArrayToString(key)
+                // // return base64Key;
+                // setKey(base64Key)
+                // console.log(base64Key)
+
+                DataRepository().getDataChat("696312966","mrugen@123.com")
+                .then((chatData)=>{
+                    console.log("Chat data got",chatData)
+                    setMessage(chatData)
+                    setKey(chatData.secureAESKey)
+                })
+                .catch((error)=>{
+                    console.error("Error getting chat Data :",error)
+                })
             }}
             disabled={key!=""}
             >
-                Get the aes key for chat
+                Get Chat Data and set AesKey
             </button>
             <button className="bg-blue-300 p-2 m-2 transition duration-800 ease-in-out hover:shadow-lg active:inset-shadow-sm active:shadow disabled:bg-gray-300"
             disabled = {key==""}
             onClick={async()=>{
-                // const message = "jDaRCBwGOO3gTjLJtl9IQsvTPbtewuYN8uACzAqqyHQTIF63SY75mO2fFcGmaItw"
-                const message = "WmpK1LDpcVoW70CCOS3Knhf+qbAHEYv/bDrrQZaoANQvbbVHz3cyL7vdkrPLD61c"
+                const message = "7xPVJz+dBDecZVUJaVDHQSCxbZgG+9pmSSfyDCUdQpg="
+               
                 // const messageArray = await EncryptionService.stringToByteArray(message)
                 const arrayKey = EncryptionService.stringToByteArray(key)
                 console.log(key)
@@ -143,7 +153,7 @@ function MainChatApp() {
                 Aes Decrypt Testing
             </button>
             <br/>
-            {message}
+            {`${message}`}
             <br/>
             <input type="text" className="border-2 border-gray-300 rounded-lg p-2 m-2 w-3xl"
             value={encMes}
@@ -163,7 +173,7 @@ function MainChatApp() {
 
                 // const messageId = await 
                 DataRepository().sendMessage(Message("",encMes,ContentType.text,User.username,Timestamp.now(),MessageStatus.Sending),
-                "1211553253",key
+                "696312966",key
                 )
                 .then((MessageId)=>{
                     console.log("message created successfully", MessageId)

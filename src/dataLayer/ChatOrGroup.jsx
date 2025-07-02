@@ -20,7 +20,18 @@ function lastMessageData(
     timestaamp}
 }
 
-
+/**
+ * 
+ * @param {String} chatId 
+ * @param {String} chatName 
+ * @param {String} isGroup false
+ * @param {Array} members []
+ * @param {String} chatPic 
+ * @param {Arrya<ChatOrGroup>} memberData []
+ * @param {lastMessageData} lastMessage 
+ * @param {String} secureAESKey 
+ * @returns ChatOrGroupObject
+ */
 function ChatOrGroup(
     chatId="",
     chatName="",

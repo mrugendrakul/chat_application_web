@@ -7,6 +7,8 @@ import { deleteKeyFromBrowser, getKeyFromBrowser, saveKeyToBrowser } from "./key
 import { data } from "react-router";
 import AESKeyData from "./AESKeyData.jsx";
 import Message from "./Message.jsx";
+import ChatOrGroup, { chatUser } from "./ChatOrGroup.jsx";
+import { getAesKeyKeyFromBrowser, saveChatAesKeyToBrowser } from "./localChatKeysStorage.js";
 
 
 function generateSixDigitUUID(n) {
@@ -176,6 +178,9 @@ function DataRepository(
                         console.log("User signouted")
                         resolve(uStatus)
                     })
+                    .catch((error) => {
+                        reject(error)
+                    })
             })
         },
 
@@ -303,6 +308,180 @@ function DataRepository(
                 }
             })
 
+        },
+
+        getDataChat(
+            chatId,
+            chatName,
+        ) {
+            return new Promise((resolve, reject) => {
+                getKeyFromBrowser("1")
+                    .then((privateKey) => {
+                        console.log("Got the private key in getDataChat")
+                        return Promise.all([
+                            firebaseApis().getChatData(chatId, chatName),
+                            Promise.resolve(privateKey)
+                        ])
+                    })
+                    .then(([ChatData, privateKey]) => {
+                        if (ChatData.isGroup) {
+                            console.log("Getting group")
+                            const memberData = Promise.all(ChatData.members.map( (member) => {
+                                return firebaseApis().getUserChatData(member)
+                                    .then((memberData) => {
+                                        console.log("Data in the calling array",memberData)
+                                        return chatUser(
+                                            memberData.username,
+                                            memberData.fcmToken,
+                                            memberData.profilePic
+                                        )
+                                    })
+                            }))
+                            console.log("memberdata is ", memberData)
+                            memberData
+                                .then((memberDataForChat) => {
+                                    console.log("Memeber data chat is ", memberDataForChat)
+                                    getAesKeyKeyFromBrowser(chatId)
+                                        .then((aesKey) => {
+                                            
+                                                console.log("Got key from Idb")
+                                                resolve(ChatOrGroup(
+                                                    chatId,
+                                                    ChatData.chatName,
+                                                    ChatData.isGroup,
+                                                    ChatData.member,
+                                                    ChatData.chatPic,
+                                                    memberDataForChat,
+                                                    ChatData.lastMessage,
+                                                    aesKey.AesString
+                                                ))
+                                            
+                                                
+                                                
+                                            })
+                                            .catch((error) => {
+                                                console.error("Error getting key from idb", error)
+                                                
+                                                console.log("no key on idb")
+    
+    
+                                                const DecryptKeyArray = EncryptionService.decryptAESKeyWithPrivateKey(
+                                                    ChatData.secureAESKey,
+                                                    privateKey
+                                                )
+                                                const AesString = EncryptionService.byteArrayToString(DecryptKeyArray)
+                                                const chatName = ChatData.chatName
+                                                saveChatAesKeyToBrowser({
+                                                    chatId,
+                                                    chatName,
+                                                    AesString
+                                                })
+                                                    .then((response) => {
+                                                        console.log("added key to idb,", response)
+                                                        resolve(ChatOrGroup(
+                                                            chatId,
+                                                            ChatData.chatName,
+                                                            ChatData.isGroup,
+                                                            ChatData.member,
+                                                            ChatData.chatPic,
+                                                            memberDataForChat,
+                                                            ChatData.lastMessage,
+                                                            AesString
+                                                        ))
+                                                    })
+                                                    .catch((error) => {
+                                                        console.error("Error setting idb", error)
+                                                        reject(error)
+                                                    })
+                                        })
+                                })
+                        }
+                        else {
+                            console.log("Getting Chat")
+                            var tempChatName = ""
+                            const memberData = Promise.all(ChatData.members.map((member) => {
+                                if (member != chatName) {
+                                    tempChatName = member
+                                    return firebaseApis().getUserChatData(member)
+                                        .then((memberData) => {
+                                            console.log("Data in the calling array",memberData)
+                                            return chatUser(
+                                                memberData.username,
+                                                memberData.fcmToken,
+                                                memberData.profilePic
+                                            )
+                                        })
+                                }
+                            }))
+                            console.log("memberdata is ", memberData)
+                            memberData.then((memberDataForChat) => {
+                                console.log("Memeber data chat is ", memberDataForChat)
+                                getAesKeyKeyFromBrowser(chatId)
+                                    .then((aesKey) => {
+
+                                        console.log("Got key from Idb")
+                                        resolve(ChatOrGroup(
+                                            chatId,
+                                            tempChatName,
+                                            ChatData.isGroup,
+                                            ChatData.member,
+                                            ChatData.chatPic,
+                                            memberDataForChat,
+                                            ChatData.lastMessage,
+                                            aesKey.AesString
+                                        ))
+                                    })
+                                    .catch((error) => {
+                                        console.error("Error getting key from idb Adding them now", error)
+                                        console.log("chat data here is", ChatData)
+                                        // console.log("Private key is ", privateKey.privateKey)
+                                        // console.log("no key on idb")
+
+
+                                        const DecryptKeyArray = EncryptionService.decryptAESKeyWithPrivateKey(
+                                            ChatData.secureAESKey,
+                                            privateKey.privateKey
+                                        )
+                                        const AesString = EncryptionService.byteArrayToString(DecryptKeyArray)
+                                        // const chatName = ChatData.chatName
+                                        saveChatAesKeyToBrowser({
+                                            chatId,
+                                            tempChatName,
+                                            AesString
+                                        })
+                                            .then((response) => {
+                                                console.log("added key to idb,", response)
+                                                resolve(ChatOrGroup(
+                                                    chatId,
+                                                    tempChatName,
+                                                    ChatData.isGroup,
+                                                    ChatData.member,
+                                                    ChatData.chatPic,
+                                                    memberDataForChat,
+                                                    ChatData.lastMessage,
+                                                    AesString
+                                                ))
+
+                                            })
+                                            .catch((error) => {
+                                                console.error("Error setting idb", error)
+                                                reject(error)
+                                            })
+                                        // reject(error)
+                                    })
+                            })
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error getting the chatData", error)
+                        reject(error)
+                    })
+
+            })
+        },
+
+        liveChatStore:()=>{
+            
         }
     }
 }
