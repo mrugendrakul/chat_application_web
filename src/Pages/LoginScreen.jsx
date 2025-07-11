@@ -1,22 +1,29 @@
 import React, {  useEffect, useState } from 'react'
-import { NavLink, useNavigate } from 'react-router';
-import firebaseApp from './firebaseUtils/initFirebase.jsx';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+// import personIcon from './assets/person.svg'
+// import visibilityIcon from './assets/visibility.svg'
+// import visibilityOffIcon from './assets/visibility_off.svg'
+import firebaseApp from '../firebaseUtils/initFirebase.jsx'
+import { NavLink } from 'react-router'
+import { getAuth, onAuthStateChanged } from 'firebase/auth'
 
-import DataRepository from './dataLayer/dataRepository.jsx';
-import LoadingStatus from './components/LoadingStatus.jsx';
+import { useNavigate } from 'react-router';
 
-function SignupScreen() {
+import DataRepository from '../dataLayer/dataRepository.jsx';
+import LoadingStatus from '../components/LoadingStatus.jsx';
+
+function LoginScreen() {
     const navigate = useNavigate();
     const auth = getAuth(firebaseApp);
-   useEffect(()=>{ onAuthStateChanged(auth,(user)=>{
-            if(user){
-              console.log("User is logged in", user);
-              navigate('/chatApp', {state: user.email}); // Redirect to chatApp with user email
-            }else{
-              console.log("No user is logged in");
-            }
-          })},[])
+      useEffect(()=>{ const subscriber = onAuthStateChanged(auth,(user)=>{
+                  if(user){
+                    console.log("User is logged in", user);
+                    navigate('/chatApp', {state: user.email});
+                    subscriber() // Redirect to chatApp with user email
+                  }else{
+                    console.log("No user is logged in");
+                    subscriber()
+                  }
+                })},[])
     // useEffect(() => {
     //     const user = auth.currentUser;
     //     if (user) {
@@ -45,57 +52,40 @@ function SignupScreen() {
         setShowPassword(!showPassword);
     };
 
+
     const submitForm = (e) => {
-        setIsLoading(true);
         e.preventDefault();
-        
-        // createUserWithEmailAndPassword(auth, formData.email, formData.password)
-        //     .then((userCredential) => {
-        //         const user = userCredential.user;
-        //         console.log("User signuped in successfully", user);
-        //         navigate('/chatApp', { state: user.email }); // Redirect to chatApp with user email
-        //     })
-        //     .catch((error) => {
-        //         console.error("Error logging in", error);
-        //     });
-
-        // firebaseApis().registerUser(formData.email, formData.password)
-        //     .then(([user, success]) => {
-        //         console.log("User signuped in successfully", user,success);
-        //         navigate('/chatApp', { state: user.email }); // Redirect to chatApp with user email
-        //     })
-        //     .catch(([error, success]) => {
-        //         console.error("Error logging in", error, success);
-        //         alert("Error logging in: " + error.message);
-        //     });
-
-        DataRepository().registerUser(formData.email, formData.password)
-            .then(([user, signkeyStatus]) => {
-                console.log("User signuped in successfully", user, signkeyStatus);
-                setIsLoading(false);
-                navigate('/chatApp', { state: user.email }); // Redirect to chatApp with user email
-            })
-            .catch(([error, success]) => { 
-                console.error("Error logging in", error, success);
-                alert("Error logging in: " + error.message);
-            });
-        // For now, just log the form data
+        setIsLoading(true);
         // console.log("Form Submitted", formData);
+       DataRepository().loginUser(formData.email, formData.password)
+            .then(([user,keystatus]) => {
+                setIsLoading(false);
+                console.log("User logged in successfully in form", user, keystatus);
+                navigate('/chatApp', { state: user.email }); // Redirect to chatApp with user
+            })
+            .catch(([error]) => {
+                setIsLoading(false);
+                console.error("Error logging in", error);
+                alert("Login failed. Please check your email and password.");
+            });
+
         setFormData({
             email: "",
             password: ""
         });
     }
-
-    const LoadingSpinner =()=>{
-        if(isLoading) return <LoadingStatus/>;
-    }
+    // const LoadingBlock =()=>{
+    //     if(isLoading){
+    //         return <LoadingStatus/>
+    //     }
+    // }
     return (
         <div>
-            {LoadingSpinner()}
+            {isLoading && <LoadingStatus/>}
+            
             <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-800">
                 <div className="bg-white p-8 rounded-lg shadow-md w-96 dark:bg-gray-900">
-                    <h2 className="text-2xl font-bold mb-6 text-center text-blue-500">Sign up now</h2>
+                    <h2 className="text-2xl font-bold mb-6 text-center text-blue-500">Login</h2>
                     <form onSubmit={submitForm}>
                         <div className="flex flex-row items-center mb-4">
                             <input
@@ -138,11 +128,11 @@ function SignupScreen() {
                             type="submit"
                             className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition duration-200"
                         >
-                            Sign up!
+                            Login
                         </button>
                     </form>
                     <button className='text-blue-500 hover:underline'>
-                        <NavLink to="/login">Already have an account? Login now</NavLink>
+                        <NavLink to="/signup">Don't have an account? Sign Up</NavLink>
                     </button>
                 </div>
             </div>
@@ -150,4 +140,4 @@ function SignupScreen() {
     )
 }
 
-export default SignupScreen
+export default LoginScreen

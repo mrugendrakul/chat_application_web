@@ -187,6 +187,24 @@ function MainChatApp() {
             >
                 Send message Testing.
             </button>
+            <br/>
+            <button
+            className="bg-orange-300 p-2 m-2 transition duration-800 ease-in-out hover:shadow-lg active:inset-shadow-sm active:shadow disabled:bg-gray-300"
+            // disabled = {key == ""}
+            onClick={()=>{
+                DataRepository().liveChatStore(
+                    User.username,
+                    (newchat)=>{
+                        console.log("Got the new Chat live",newchat)
+                    },
+                    (modifiedChat)=>{
+                        console.log("Modified Chat is",modifiedChat.lastMessage.content)
+                    }
+                )
+            }}
+            >
+                Get Live chats test
+            </button>
         </div>
     )
 }
