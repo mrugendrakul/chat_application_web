@@ -13,11 +13,11 @@ function chatUser(
 function lastMessageData(
     sender = "",
     content = "",
-    timestaamp=""
+    timeStamp=""
 ){
     return{sender,
     content,
-    timestaamp}
+    timeStamp}
 }
 
 /**
@@ -28,7 +28,7 @@ function lastMessageData(
  * @param {Array} members []
  * @param {String} chatPic 
  * @param {Arrya<ChatOrGroup>} memberData []
- * @param {lastMessageData} lastMessage 
+ * @param {{sender,content,timeStamp}} lastMessage 
  * @param {String} secureAESKey 
  * @returns ChatOrGroupObject
  */

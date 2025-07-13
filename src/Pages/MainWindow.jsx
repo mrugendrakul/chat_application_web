@@ -1,8 +1,9 @@
 import React from 'react'
+import ChatsComponent from '../components/ChatsComponents/ChatsComponent'
 
 function MainWindow() {
   return (
-    <div>MainWindow</div>
+    <div><ChatsComponent/></div>
   )
 }
 
