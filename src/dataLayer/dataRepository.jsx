@@ -280,6 +280,7 @@ function DataRepository(
                     })
                     .then((uStatus) => {
                         console.log("User signouted")
+                        networkFirebaseApis.stopLiveChatOrGroup()
                         resolve(uStatus)
                     })
                     .catch((error) => {

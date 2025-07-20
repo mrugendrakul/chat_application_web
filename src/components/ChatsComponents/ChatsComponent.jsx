@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import DataRepository from '../../dataLayer/dataRepository'
 import ChatList from './ChatList'
+import ChatsNavigationBar from './ChatsNavigationBar'
+import { useNavigate } from 'react-router'
 
 const ChatsComponent = (
     {username = 'mrugen@123.com'}
 ) => {
+    const navigate = useNavigate()
     const [chatData,setchatData] = useState({
     })
     useEffect(()=>{
@@ -23,14 +26,26 @@ const ChatsComponent = (
         )
     },[])
 
+    const LogoutFunction = ()=>{
+        DataRepository().logoutUser()
+        .then((val)=>{
+            console.log("Logout success",val)
+            navigate('/')
+        })
+        .catch((err)=>{
+            console.error("Unable to logout",err)
+            alert("Unable to logout")
+        })
+    }
+
   return (
-    <div className='dark:bg-gray-800 h-dvh dark:text-white w-full max-w-xl'>
-        All chats getting
-        {/* {displayChats()} */}
+      <div >
+      <ChatsNavigationBar username={username} logout={LogoutFunction}/>
+        <div className='dark:bg-black bg-amber-500 dark:text-white w-full block mt-14'>
         {Object.entries(chatData).map(([chatId,chat])=>(
           <ChatList key={chatId} chatData = {chat}/>
-          
         ))}
+        </div>
     </div>
   )
 }
