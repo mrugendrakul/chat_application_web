@@ -39,9 +39,9 @@ const ChatsComponent = (
     }
 
   return (
-      <div >
+      <div className='overflow-y-auto'>
       <ChatsNavigationBar username={username} logout={LogoutFunction}/>
-        <div className='dark:bg-black dark:text-white w-full block mt-14'>
+        <div className='w-full block'>
         {Object.entries(chatData).map(([chatId,chat])=>(
           <ChatList key={chatId} chatData = {chat}/>
         ))}

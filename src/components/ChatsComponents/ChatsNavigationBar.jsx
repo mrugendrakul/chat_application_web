@@ -7,7 +7,7 @@ const ChatsNavigationBar = ({username,logout}) => {
         setIsMenuOpen(!isMenuOpen)
     }
   return (
-    <nav className="w-full bg-white dark:bg-black shadow-md fixed top-0 z-10">
+    <nav className="w-full bg-white dark:bg-black shadow-md">
       <div className="flex justify-between items-center px-4 py-3 max-w-7xl mx-auto">
         {/* Logo */}
         <div className='text-xl font-bold text-blue-700'>

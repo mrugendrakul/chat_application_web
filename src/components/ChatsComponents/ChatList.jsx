@@ -12,7 +12,7 @@ const ChatList = ({
       hover:bg-gray-300/30
         hover:cursor-pointer
       selection:bg-gray-500/30
-      active:bg-gray-500
+      active:bg-gray-500/30
       dark:hover:bg-gray-50/40
       dark:active:bg-gray-300/40
       '
