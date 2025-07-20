@@ -22,6 +22,11 @@ const ChatsComponent = (
             (modifiedChat)=>{
                 const modChatId = modifiedChat.chatId
                 setchatData(prevChats => ({...prevChats, [modChatId]:modifiedChat}))
+            },
+            (deletedChat)=>{
+                const delchatId = deletedChat.chatId
+                setchatData(prevChats=>{ const {[delchatId]:deletedvalue, ... remaining} = prevChats
+                return remaining})
             }
         )
     },[])
