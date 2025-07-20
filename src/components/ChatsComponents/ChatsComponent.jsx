@@ -41,7 +41,7 @@ const ChatsComponent = (
   return (
       <div >
       <ChatsNavigationBar username={username} logout={LogoutFunction}/>
-        <div className='dark:bg-black bg-amber-500 dark:text-white w-full block mt-14'>
+        <div className='dark:bg-black dark:text-white w-full block mt-14'>
         {Object.entries(chatData).map(([chatId,chat])=>(
           <ChatList key={chatId} chatData = {chat}/>
         ))}
