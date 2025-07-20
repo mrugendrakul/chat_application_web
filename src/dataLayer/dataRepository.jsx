@@ -653,6 +653,7 @@ function DataRepository(
             onAdd,
             onDelete
         )=>{
+            console.log("Getting the messages data")
             firebaseApis().getLiveMessagesForChat(
                 chatId,
                 async (changeMessage)=>{

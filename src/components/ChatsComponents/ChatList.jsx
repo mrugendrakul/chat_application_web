@@ -2,7 +2,8 @@ import React from 'react'
 import ChatOrGroup from '../../dataLayer/ChatOrGroup'
 
 const ChatList = ({
-  chatData = ChatOrGroup() }
+  chatData = ChatOrGroup() ,
+  onClickChat}
 ) => {
   return (
     <button
@@ -16,7 +17,10 @@ const ChatList = ({
       dark:hover:bg-gray-50/40
       dark:active:bg-gray-300/40
       '
-      onClick={()=>{console.log("button presses")}}
+      onClick={()=>{
+        console.log(chatData.chatId)
+        onClickChat(chatData.chatId)
+      }}
     >
       <div key={chatData.chatId}
         className='flex 

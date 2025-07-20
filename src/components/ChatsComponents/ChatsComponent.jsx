@@ -5,12 +5,17 @@ import ChatsNavigationBar from './ChatsNavigationBar'
 import { useNavigate } from 'react-router'
 
 const ChatsComponent = (
-    {username = 'mrugen@123.com'}
+    {username,setCurrentChatid}
 ) => {
     const navigate = useNavigate()
     const [chatData,setchatData] = useState({
     })
     useEffect(()=>{
+        console.log("use effect inside the chatsComponent")
+        if(!username){
+            console.log("Skipping calling api")
+            return
+        }
         DataRepository().liveChatStore(
             username,
             (newChat)=>{
@@ -29,7 +34,7 @@ const ChatsComponent = (
                 return remaining})
             }
         )
-    },[])
+    },[username])
 
     const LogoutFunction = ()=>{
         DataRepository().logoutUser()
@@ -44,11 +49,11 @@ const ChatsComponent = (
     }
 
   return (
-      <div className='overflow-y-auto'>
+      <div className='overflow-y-auto h-full'>
       <ChatsNavigationBar username={username} logout={LogoutFunction}/>
         <div className='w-full block'>
         {Object.entries(chatData).map(([chatId,chat])=>(
-          <ChatList key={chatId} chatData = {chat}/>
+          <ChatList key={chatId} chatData = {chat} onClickChat={setCurrentChatid}/>
         ))}
         </div>
     </div>
