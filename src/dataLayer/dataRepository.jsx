@@ -4,8 +4,10 @@ import firebaseApp from '../firebaseUtils/initFirebase.jsx';
 import EncryptionService from "./encryptionService.jsx";
 import User from "../dataLayer/User.jsx";
 import { deleteKeyFromBrowser, getKeyFromBrowser, saveKeyToBrowser } from "./keyStorage.js";
-import { data } from "react-router";
 import AESKeyData from "./AESKeyData.jsx";
+import Message from "./Message.jsx";
+import ChatOrGroup, { chatUser, lastMessageData } from "./ChatOrGroup.jsx";
+import { getAesKeyKeyFromBrowser, saveChatAesKeyToBrowser } from "./localChatKeysStorage.js";
 
 
 function generateSixDigitUUID(n) {
@@ -23,6 +25,111 @@ function hashCode(str) {
         hash |= 0; // Convert to 32bit integer
     }
     return hash;
+}
+
+/**
+ * 
+ * @param {(ChatOrGroup)=>{}} onChatFunction 
+ * @param {apiChat} chatData 
+ * @param {browswerKeys} userPrivateKey
+ */
+function apiChatToOurChat(onChatFunction, chatData, userPrivateKey, myUsername) {
+    getAesKeyKeyFromBrowser(chatData.chatId)
+        .then((publicKeyObject) => {
+            const aesKey = publicKeyObject.decryptedAesKey
+            let tempUsername = "chat"
+            const memberInfos = Promise.all(chatData.members.map((mem) => {
+                if (mem != myUsername) {
+                    tempUsername = mem
+                }
+                firebaseApis().getUserChatData(mem)
+                    .then((userInfo) => {
+                        return chatUser(
+                            userInfo.username,
+                            userInfo.fcmToken,
+                            userInfo.profilePic
+                        )
+                    })
+            }))
+            memberInfos.then(async (memInfos) => {
+                let contentEnc = "Unable to decrypt message"
+                console.log("Enc content", chatData.lastMessage.content, "Aes key is :", aesKey)
+                const aeskeyArrya = EncryptionService.stringToByteArray(aesKey)
+
+                contentEnc = await EncryptionService.aesDecrypt(
+                    chatData.lastMessage.content,
+                    aeskeyArrya
+                )
+                const latestChat = ChatOrGroup(
+                    chatData.chatId,
+                    tempUsername,
+                    false,
+                    chatData.members,
+                    chatData.chatPic,
+                    memInfos,
+                    lastMessageData(
+                        chatData.lastMessage.sender,
+                        contentEnc,
+                        chatData.lastMessage.timeStamp
+                    ),
+                    aesKey
+                )
+                onChatFunction(latestChat)
+            })
+        })
+        .catch((error) => {
+            console.warn("Error geting the keys:", error)
+            console.log("Data reqd:",chatData.secureAESKey.key)
+            const DecryptKeyArray = EncryptionService.decryptAESKeyWithPrivateKey(
+                chatData.secureAESKey.key,
+                userPrivateKey
+            )
+            const AesString = EncryptionService.byteArrayToString(DecryptKeyArray)
+            const [chatId, chatName] = [chatData.chatId, chatData.chatName]
+            saveChatAesKeyToBrowser({
+                chatId,
+                chatName,
+                "decryptedAesKey":AesString
+            })
+
+            let tempUsername = "chat"
+            const memberInfos = Promise.all(chatData.members.map((mem) => {
+                if (mem != myUsername) {
+                    tempUsername = mem
+                }
+                firebaseApis().getUserChatData(mem)
+                    .then((userInfo) => {
+                        return chatUser(
+                            userInfo.username,
+                            userInfo.fcmToken,
+                            userInfo.profilePic
+                        )
+                    })
+            }))
+            memberInfos.then(async (memInfos) => {
+                let contentEnc = "Unable to decrypt message"
+                const aeskeyArrya = EncryptionService.stringToByteArray(AesString)
+                contentEnc = await EncryptionService.aesDecrypt(
+                    chatData.lastMessage.content,
+                    aeskeyArrya
+                )
+                const latestChat = ChatOrGroup(
+                    chatData.chatId,
+                    tempUsername,
+                    false,
+                    chatData.members,
+                    chatData.chatPic,
+                    memInfos,
+                    lastMessageData(
+                        chatData.lastMessage.sender,
+                        contentEnc,
+                        chatData.lastMessage.timeStamp
+                    ),
+                    AesString
+                )
+                onChatFunction(latestChat)
+            })
+        })
 }
 
 function DataRepository(
@@ -173,7 +280,11 @@ function DataRepository(
                     })
                     .then((uStatus) => {
                         console.log("User signouted")
+                        networkFirebaseApis.stopLiveChatOrGroup()
                         resolve(uStatus)
+                    })
+                    .catch((error) => {
+                        reject(error)
                     })
             })
         },
@@ -201,7 +312,7 @@ function DataRepository(
             isGroup,
         ) => {
             memberUsers.push(currentUser.username)
-            console.log("Chat addition started for members,",memberUsers)
+            console.log("Chat addition started for members,", memberUsers)
             const chatId = generateSixDigitUUID(24)
             return new Promise((resolve, reject) => {
                 EncryptionService.generateAESKey()
@@ -230,9 +341,9 @@ function DataRepository(
                             publicKeys.map(async (key) => {
                                 // console.log(key.username, key.key)
                                 const encryptedKeyBytes = await EncryptionService.encryptAESKeyWithPublicKey(
-                                            commonAesKey,
-                                            EncryptionService.stringToPublicKey(key.key)
-                                        )
+                                    commonAesKey,
+                                    EncryptionService.stringToPublicKey(key.key)
+                                )
                                 return AESKeyData({
                                     username: key.username,
                                     key: EncryptionService.byteArrayToString(
@@ -268,6 +379,340 @@ function DataRepository(
                     })
             })
 
+        },
+
+        sendMessage: async (
+            message = Message(),
+            chatId,
+            secureAESKey,
+
+        ) => {
+            return new Promise((resolve, reject) => {
+                try {
+                    const secureAesArray = EncryptionService.stringToByteArray(secureAESKey)
+                    EncryptionService.aesEncryptMessages(
+                        message.content, secureAesArray
+                    )
+                        .then((encryptedMessageContent) => {
+
+                            const encryptedMessageString = EncryptionService.byteArrayToString(encryptedMessageContent)
+                            const encyMessage = Message(
+                                message.messageId, encryptedMessageString, message.contentType, message.senderId
+                                , message.timeStamp, message.status
+                            )
+                            firebaseApis().sendNewMessage(encyMessage, chatId, encryptedMessageString)
+                                .then((messageId) => {
+                                    console.log("Message id data", messageId)
+                                    resolve(messageId)
+                                })
+                        })
+                } catch (e) {
+                    console.error("Error sending message datarepo", e)
+                    reject(e)
+
+                }
+            })
+
+        },
+
+        getDataChat(
+            chatId,
+            chatName,
+        ) {
+            return new Promise((resolve, reject) => {
+                getKeyFromBrowser("1")
+                    .then((privateKey) => {
+                        console.log("Got the private key in getDataChat")
+                        return Promise.all([
+                            firebaseApis().getChatData(chatId, chatName),
+                            Promise.resolve(privateKey)
+                        ])
+                    })
+                    .then(([ChatData, privateKey]) => {
+                        if (ChatData.isGroup) {
+                            console.log("Getting group")
+                            const memberData = Promise.all(ChatData.members.map((member) => {
+                                return firebaseApis().getUserChatData(member)
+                                    .then((memberData) => {
+                                        console.log("Data in the calling array", memberData)
+                                        return chatUser(
+                                            memberData.username,
+                                            memberData.fcmToken,
+                                            memberData.profilePic
+                                        )
+                                    })
+                            }))
+                            console.log("memberdata is ", memberData)
+                            memberData
+                                .then((memberDataForChat) => {
+                                    console.log("Memeber data chat is ", memberDataForChat)
+                                    getAesKeyKeyFromBrowser(chatId)
+                                        .then((aesKey) => {
+
+                                            console.log("Got key from Idb")
+                                            resolve(ChatOrGroup(
+                                                chatId,
+                                                ChatData.chatName,
+                                                ChatData.isGroup,
+                                                ChatData.member,
+                                                ChatData.chatPic,
+                                                memberDataForChat,
+                                                ChatData.lastMessage,
+                                                aesKey.decryptedAesKey
+                                            ))
+
+
+
+                                        })
+                                        .catch((error) => {
+                                            console.error("Error getting key from idb", error)
+
+                                            console.log("no key on idb")
+
+
+                                            const DecryptKeyArray = EncryptionService.decryptAESKeyWithPrivateKey(
+                                                ChatData.secureAESKey,
+                                                privateKey
+                                            )
+                                            const AesString = EncryptionService.byteArrayToString(DecryptKeyArray)
+                                            const chatName = ChatData.chatName
+                                            saveChatAesKeyToBrowser({
+                                                chatId,
+                                                chatName,
+                                                "decryptedAesKey":AesString
+                                            })
+                                                .then((response) => {
+                                                    console.log("added key to idb,", response)
+                                                    resolve(ChatOrGroup(
+                                                        chatId,
+                                                        ChatData.chatName,
+                                                        ChatData.isGroup,
+                                                        ChatData.member,
+                                                        ChatData.chatPic,
+                                                        memberDataForChat,
+                                                        ChatData.lastMessage,
+                                                        AesString
+                                                    ))
+                                                })
+                                                .catch((error) => {
+                                                    console.error("Error setting idb", error)
+                                                    reject(error)
+                                                })
+                                        })
+                                })
+                        }
+                        else {
+                            console.log("Getting Chat")
+                            var tempChatName = ""
+                            const memberData = Promise.all(ChatData.members.map((member) => {
+                                if (member != chatName) {
+                                    tempChatName = member
+                                    return firebaseApis().getUserChatData(member)
+                                        .then((memberData) => {
+                                            console.log("Data in the calling array", memberData)
+                                            return chatUser(
+                                                memberData.username,
+                                                memberData.fcmToken,
+                                                memberData.profilePic
+                                            )
+                                        })
+                                }
+                            }))
+                            console.log("memberdata is ", memberData)
+                            memberData.then((memberDataForChat) => {
+                                console.log("Memeber data chat is ", memberDataForChat)
+                                getAesKeyKeyFromBrowser(chatId)
+                                    .then((aesKey) => {
+
+                                        console.log("Got key from Idb")
+                                        resolve(ChatOrGroup(
+                                            chatId,
+                                            tempChatName,
+                                            ChatData.isGroup,
+                                            ChatData.member,
+                                            ChatData.chatPic,
+                                            memberDataForChat,
+                                            ChatData.lastMessage,
+                                            aesKey.decryptedAesKey
+                                        ))
+                                    })
+                                    .catch((error) => {
+                                        console.error("Error getting key from idb Adding them now", error)
+                                        console.log("chat data here is", ChatData)
+                                        // console.log("Private key is ", privateKey.privateKey)
+                                        // console.log("no key on idb")
+
+
+                                        const DecryptKeyArray = EncryptionService.decryptAESKeyWithPrivateKey(
+                                            ChatData.secureAESKey,
+                                            privateKey.privateKey
+                                        )
+                                        const AesString = EncryptionService.byteArrayToString(DecryptKeyArray)
+                                        // const chatName = ChatData.chatName
+                                        saveChatAesKeyToBrowser({
+                                            "chatId": chatId,
+                                            "chatName": tempChatName,
+                                            "decryptedAesKey": AesString
+                                        })
+                                            .then((response) => {
+                                                console.log("added key to idb,", response)
+                                                resolve(ChatOrGroup(
+                                                    chatId,
+                                                    tempChatName,
+                                                    ChatData.isGroup,
+                                                    ChatData.member,
+                                                    ChatData.chatPic,
+                                                    memberDataForChat,
+                                                    ChatData.lastMessage,
+                                                    AesString
+                                                ))
+
+                                            })
+                                            .catch((error) => {
+                                                console.error("Error setting idb", error)
+                                                reject(error)
+                                            })
+                                        // reject(error)
+                                    })
+                            })
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error getting the chatData", error)
+                        reject(error)
+                    })
+
+            })
+        },
+
+        /**
+         * 
+         * @param {String} myUsername 
+         * @param {(ChatOrGroup)=>{}} onChatAdd 
+         * @param {(ChatOrGroup)=>{}} onChatUpdate 
+         * @param {(ChatOrGroup)=>{}} onChatDelete 
+         * @param {(Error)=>{}} onError 
+         */
+        liveChatStore: (
+            myUsername,
+            onChatAdd,
+            onChatUpdate,
+            onChatDelete,
+            onError
+        ) => {
+            getKeyFromBrowser("1")
+                .then((privateKey) => {
+                    const userPrivateKey = privateKey.privateKey
+                    firebaseApis().getLiveChatsOrGroups(
+                        myUsername,
+                        false,
+
+                        (newChat) => {
+                            console.log("Getting live chats data repo")
+                            // getAesKeyKeyFromBrowser(newChat.chatId)
+                            //     .then((publicKeyObject) => {
+                            //         const aesKey = publicKeyObject.decryptedAesKey
+                            //         let tempUsername = "chat"
+                            //         const memberInfos = Promise.all(newChat.members.map((mem) => {
+                            //             if (mem != myUsername) {
+                            //                 tempUsername = mem
+                            //             }
+                            //             firebaseApis().getUserChatData(mem)
+                            //                 .then((userInfo) => {
+                            //                     return chatUser(
+                            //                         userInfo.username,
+                            //                         userInfo.fcmToken,
+                            //                         userInfo.profilePic
+                            //                     )
+                            //                 })
+                            //         }))
+                            //         memberInfos.then(async (memInfos) => {
+                            //             let contentEnc = "Unable to decrypt message"
+                            //             console.log("Enc content", newChat.lastMessage.content, "Aes key is :", aesKey)
+                            //             const aeskeyArrya = EncryptionService.stringToByteArray(aesKey)
+
+                            //             contentEnc = await EncryptionService.aesDecrypt(
+                            //                 newChat.lastMessage.content,
+                            //                 aeskeyArrya
+                            //             )
+                            //             const latestChat = ChatOrGroup(
+                            //                 newChat.chatId,
+                            //                 tempUsername,
+                            //                 false,
+                            //                 newChat.members,
+                            //                 newChat.chatPic,
+                            //                 memInfos,
+                            //                 lastMessageData(
+                            //                     newChat.lastMessage.sender,
+                            //                     contentEnc,
+                            //                     newChat.lastMessage.timeStamp
+                            //                 ),
+                            //                 aesKey
+                            //             )
+                            //             onChatAdd(latestChat)
+                            //         })
+                            //     })
+                            //     .catch((error) => {
+                            //         console.error("Error geting the keys:", error)
+                            //         const DecryptKeyArray = EncryptionService.decryptAESKeyWithPrivateKey(
+                            //             newChat.secureAESKey,
+                            //             userPrivateKey
+                            //         )
+                            //         const AesString = EncryptionService.byteArrayToString(DecryptKeyArray)
+                            //         const [chatId, chatName] = [newChat.chatId, newChat.chatName]
+                            //         saveChatAesKeyToBrowser({
+                            //             chatId,
+                            //             chatName,
+                            //             AesString
+                            //         })
+
+                            //         let tempUsername = "chat"
+                            //         const memberInfos = Promise.all(newChat.members.map((mem) => {
+                            //             if (mem != myUsername) {
+                            //                 tempUsername = mem
+                            //             }
+                            //             firebaseApis().getUserChatData(mem)
+                            //                 .then((userInfo) => {
+                            //                     return chatUser(
+                            //                         userInfo.username,
+                            //                         userInfo.fcmToken,
+                            //                         userInfo.profilePic
+                            //                     )
+                            //                 })
+                            //         }))
+                            //         memberInfos.then(async (memInfos) => {
+                            //             let contentEnc = "Unable to decrypt message"
+                            //             const aeskeyArrya = EncryptionService.stringToByteArray(AesString)
+                            //             contentEnc = await EncryptionService.aesDecrypt(
+                            //                 newChat.lastMessage.content,
+                            //                 aeskeyArrya
+                            //             )
+                            //             const latestChat = ChatOrGroup(
+                            //                 newChat.chatId,
+                            //                 tempUsername,
+                            //                 false,
+                            //                 newChat.members,
+                            //                 newChat.chatPic,
+                            //                 memInfos,
+                            //                 lastMessageData(
+                            //                     newChat.lastMessage.sender,
+                            //                     contentEnc,
+                            //                     newChat.lastMessage.timeStamp
+                            //                 ),
+                            //                 AesString
+                            //             )
+                            //             onChatAdd(latestChat)
+                            //         })
+                            //     })
+                            apiChatToOurChat(onChatAdd,newChat,userPrivateKey,myUsername)
+                        },
+                        (modifiedChat) => {
+                           apiChatToOurChat(onChatUpdate,modifiedChat,userPrivateKey,myUsername)
+                        },
+                        onChatDelete,
+                        onError
+                    )
+                })
         }
     }
 }

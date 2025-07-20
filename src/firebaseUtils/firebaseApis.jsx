@@ -1,7 +1,9 @@
 import { getAuth } from 'firebase/auth';
 import firebaseApp from './initFirebase.jsx';
-import { arrayUnion, collection, doc, getDoc, getDocFromCache, getDocs, getFirestore, limit, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
+import { addDoc, arrayUnion, collection, doc, getDoc, getDocFromCache, getDocs, getFirestore, limit, onSnapshot, Query, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
 import AESKeyData from '../dataLayer/AESKeyData.jsx';
+import Message from '../dataLayer/Message.jsx';
+import ChatOrGroup, { chatUser, lastMessageData } from '../dataLayer/ChatOrGroup.jsx';
 
 
 function chunkArray(arr, size) {
@@ -11,7 +13,7 @@ function chunkArray(arr, size) {
     }
     return chunks;
 }
-
+let ListenChats = null
 
 function firebaseApis(
     db = getFirestore(firebaseApp),
@@ -168,9 +170,9 @@ function firebaseApis(
                 const newChat = {
                     "chatId": chatId,
                     "chatName": chatName,
-                    "profilePhoto" : profilePhoto,
-                    "isGroup" : isGroup,
-                    "members" : members,
+                    "profilePhoto": profilePhoto,
+                    "isGroup": isGroup,
+                    "members": members,
                     "lastMessage": [recentMessage, Timestamp.now()],
                     "encryptedAESKeys": encryptedAESKeys
                 }
@@ -187,7 +189,7 @@ function firebaseApis(
         },
 
         getPublicRSAKeyForMemeber: (listOfMembers) => {
-            console.log("Started Getting the keys for users",listOfMembers)
+            console.log("Started Getting the keys for users", listOfMembers)
             return new Promise((resolve, reject) => {
                 const batched = chunkArray(listOfMembers, 10)
                 const RSAMemberKeys = []
@@ -199,7 +201,7 @@ function firebaseApis(
                     )
                     return getDocs(keysQuery)
                         .then((keysSnapshot) => {
-                            keysSnapshot.docs.forEach(doc=>{
+                            keysSnapshot.docs.forEach(doc => {
                                 const data = doc.data();
                                 RSAMemberKeys.push({
                                     username: data.username || "",
@@ -207,28 +209,272 @@ function firebaseApis(
                                 })
                             })
                         })
-                        
+
                 })
-                
+
                 Promise.all(batchPromises)
-                .then(()=>{
-                    resolve(RSAMemberKeys);
-                })
-                .catch((error)=>{
-                    console.error("Error getting keys",error)
-                    reject(error)
-                })
+                    .then(() => {
+                        resolve(RSAMemberKeys);
+                    })
+                    .catch((error) => {
+                        console.error("Error getting keys", error)
+                        reject(error)
+                    })
             })
         },
 
-        sendNewMessage:()=>{
-            
+        sendNewMessage: async (
+            message = Message(),
+            chatId,
+            recentMessage
+        ) => {
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error("Timeout while sending message")), 5000)
+            })
+
+            const sendMessagePromise = (async () => {
+                try {
+                    const lastMessage = [
+                        recentMessage, message.timeStamp, message.senderId
+                    ]
+
+                    const messageRef = collection(db, chatsCollectinName, chatId, "Messages")
+
+                    const docRef = await addDoc(messageRef, message)
+                    const messageId = docRef.id
+
+                    const chatDataRef = doc(db, chatsCollectinName, chatId)
+                    await updateDoc(chatDataRef, { lastMessage })
+
+                    console.log("Message send successfully and updated chat", messageId)
+                    return messageId
+
+                } catch (e) {
+                    console.error("Error sending message", e)
+                    return ""
+                }
+            })()
+
+            try {
+                return await Promise.race([sendMessagePromise, timeoutPromise])
+            }
+            catch (e) {
+                console.error("Error sending message", e)
+                return `${e}`
+            }
+
+        },
+
+        getChatData: (chatId, username) => {
+            return new Promise((resolve, reject) => {
+                console.log("Getting chatData started")
+                const chatDataDoc = doc(db, chatsCollectinName, chatId)
+                getDoc(chatDataDoc)
+                    .then((chatDoc) => {
+                        const chatData = chatDoc.data()
+                        const aesKeys = chatData.encryptedAESKeys || null
+                        // const arrayTest = []
+
+                        if (aesKeys != null) {
+                            console.log("Got the keys", chatData)
+                            const myAeskey = aesKeys.filter((key) =>
+                                key.username === username
+                            )[0]
+                            console.log("My key in api", myAeskey.username)
+
+                            resolve(
+                                ChatOrGroup(
+                                    chatId,
+                                    chatData.chatName,
+                                    chatData.isGroup,
+                                    chatData.members,
+                                    "",
+                                    null,
+                                    lastMessageData("", "", ""),
+                                    myAeskey.key
+                                )
+                            )
+                        }
+                        else {
+                            console.error("Unable to get the key")
+                            reject(new Error("No key in the chat backend"))
+                        }
+                    })
+            })
+        },
+
+        getUserChatData: (username) => {
+            console.log("Called getUserChat Data for ", username)
+            return new Promise((resolve, reject) => {
+                const userDocument = collection(db, usersCollectionName)
+                const userQuery = query(
+                    userDocument,
+                    where("username", "==", username)
+                )
+                getDocs(userQuery)
+                    .then((userSnapshot) => {
+                        const result = userSnapshot.docs[0].data()
+                        // console.log("user chat data",result)
+                        resolve(
+                            chatUser(
+                                result.username,
+                                result.fcmToken,
+                                result.profilePic
+                            )
+                        )
+                    })
+                    .catch((error) => {
+                        console.error("Error getting user chatData", error)
+                        reject(error)
+                    })
+            })
+        },
+
+
+        /**
+         * 
+         * @param {String} username    
+         * @param {Boolean} isGroup 
+         * @param {(ChatOrGroup)=>{}} onAddChat 
+         * @param {(ChatOrGroup)=>{}} onModifiedChat 
+         * @param {(ChatOrGroup)=>{}} onDeleteChat 
+         * @param {(Error)=>{}} onError 
+         */
+        getLiveChatsOrGroups(
+            username,
+            isGroup,
+            onAddChat,
+            onModifiedChat,
+            onDeleteChat,
+            onError
+        ) {
+            if(ListenChats){
+                ListenChats()
+            }
+            else{
+                ListenChats = null
+            }
+            const chatscoll = collection(db, chatsCollectinName)
+            const chatsQuery = query(
+                chatscoll,
+                where("members", "array-contains", username),
+                where("isGroup", "==", isGroup)
+            )
+            try{
+                ListenChats = onSnapshot(chatsQuery,
+                    (snapshot) => {
+                        snapshot.docChanges().forEach((change) => {
+                            if (change.type === 'added') {
+                                console.log("add chat", change.doc.data())
+                                const chatData = change.doc.data()
+                                const chatLastMessage = chatData.lastMessage
+                                const lastMessage = lastMessageData(
+                                    chatLastMessage[2] || "",
+                                    chatLastMessage[0],
+                                    lastMessageData[1]
+                                )
+                                const chatAesKey = chatData.encryptedAESKeys
+                                const mySecureAesKey = chatAesKey.filter((key) =>
+                                    key.username === username
+                                )[0]
+                                const addChat = ChatOrGroup(
+                                    chatData.chatId,
+                                    chatData.chatName,
+                                    chatData.isGroup,
+                                    chatData.members,
+                                    chatData.chatPic,
+                                    chatData.memberData,
+                                    lastMessage,
+                                    mySecureAesKey
+
+                                )
+                                onAddChat(addChat)
+                            }
+                            if (change.type === 'modified') {
+                                // console.log("modified chat", change.doc.data())
+                                const chatData = change.doc.data()
+                                const chatLastMessage = chatData.lastMessage
+                                const lastMessage = lastMessageData(
+                                    chatLastMessage[2] || "",
+                                    chatLastMessage[0],
+                                    lastMessageData[1]
+                                )
+                                const chatAesKey = chatData.encryptedAESKeys
+                                const mySecureAesKey = chatAesKey.filter((key) =>
+                                    key.username === username
+                                )[0]
+                                const addChat = ChatOrGroup(
+                                    chatData.chatId,
+                                    chatData.chatName,
+                                    chatData.isGroup,
+                                    chatData.members,
+                                    chatData.chatPic,
+                                    chatData.memberData,
+                                    lastMessage,
+                                    mySecureAesKey
+
+                                )
+                                onModifiedChat(addChat)
+                            }
+                            if (change.type === 'removed') {
+                                console.log("remove chat", change.doc.data())
+                                const chatData = change.doc.data()
+                                const chatLastMessage = chatData.lastMessage
+                                const lastMessage = lastMessageData(
+                                    chatLastMessage[2] || "",
+                                    chatLastMessage[0],
+                                    lastMessageData[1]
+                                )
+                                const chatAesKey = chatData.encryptedAESKeys
+                                const mySecureAesKey = chatAesKey.filter((key) =>
+                                    key.username === username
+                                )[0]
+                                const addChat = ChatOrGroup(
+                                    chatData.chatId,
+                                    chatData.chatName,
+                                    chatData.isGroup,
+                                    chatData.members,
+                                    chatData.chatPic,
+                                    chatData.memberData,
+                                    lastMessage,
+                                    mySecureAesKey
+
+                                )
+                                onDeleteChat(addChat)
+                            }
+                        })
+                    },
+                    (error) => {
+                        console.error("Unable to start the listening", error)
+                        onError(error)
+                        ListenChats()
+                    }
+                )
+            }
+            catch(error){
+                console.error("Error starting listening:",error)
+            }
+        },
+
+        stopLiveChatOrGroup:(
+
+        )=>{
+            if(ListenChats){
+                ListenChats()
+            }
         }
     }
 
 
 
-
 }
 
+// firebaseApis().getLiveChatsOrGroups(
+//     "mrugen@123.com",
+//     false,
+//     (chat) => {
+//         console.log("Added chat test", chat)
+//     },
+
+// )
 export default firebaseApis
