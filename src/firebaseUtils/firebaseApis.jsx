@@ -476,6 +476,7 @@ function firebaseApis(
                 (snapshot)=>{
                     snapshot.docChanges().forEach((change)=>{
                         const messageData = change.doc.data()
+                        const messageId = change.doc.id
                         let messageContentType = ContentType.text
                         switch(messageData.contentType){
                             case "text":
@@ -501,7 +502,7 @@ function firebaseApis(
                             
                         }
                         const messageFromApi = Message(
-                            messageData.messageId,messageData.content,
+                            messageId,messageData.content,
                             messageContentType,messageData.senderId,messageData.timeStamp,
                             MessageStatus.Send
                         )

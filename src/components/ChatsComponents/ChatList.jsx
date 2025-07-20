@@ -33,7 +33,7 @@ const ChatList = ({
 
         <div className='flex flex-1 flex-col min-w-0 ml-2 mr-2'>
 
-          <p className='text-start '>
+          <p className='truncate text-start '>
             {chatData.chatName}
           </p>
           <div className='min-w-0'>

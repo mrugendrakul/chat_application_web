@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 
-const MessageNavigationBar = ({username,logout}) => {
+const MessageNavigationBar = ({username}) => {
     const [isMenuOpen,setIsMenuOpen] = useState()
 
     const toggleMenu = ()=>{
@@ -11,7 +11,7 @@ const MessageNavigationBar = ({username,logout}) => {
       <div className="flex justify-between items-center px-4 py-3 max-w-7xl mx-auto">
         {/* Logo */}
         <div className='text-xl font-bold text-blue-700'>
-          {username}Placeholder
+          {username}
         </div>
 
         <div className="relative">
@@ -38,12 +38,12 @@ const MessageNavigationBar = ({username,logout}) => {
                 // aria-labelledby="menu-button"
                 // tabIndex="-1"
               >
-                <button className='block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-start'>
+                <button className='block truncate px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-start'>
                     {username}
                 </button>
                 <button className='block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-start' role='menuitem' tabIndex="-1"
-                onClick={logout}>
-                    Logout
+               >
+                    
                 </button>
               </div>
             )}

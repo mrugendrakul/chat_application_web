@@ -38,7 +38,7 @@ function MainWindow() {
                 navigate('/');
               }
             })
-    },3000)
+    },0)
   },[])
 
   return (
