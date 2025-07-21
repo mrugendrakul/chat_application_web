@@ -25,7 +25,7 @@ const ChatsNavigationBar = ({username,logout}) => {
                 // aria-haspopup="true"
               >
                 <span className="sr-only">Open user menu</span>
-                <img className="h-8 w-8 rounded-full" src="https://placehold.co/32x32/6366f1/ffffff?text=U" alt="User avatar" />
+                <img className="h-6 w-6 rounded-full" src="https://placehold.co/32x32/6366f1/ffffff?text=M" alt="User avatar" />
               </button>
             </div>
 

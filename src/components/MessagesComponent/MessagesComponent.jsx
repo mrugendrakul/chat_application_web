@@ -31,20 +31,20 @@ const MessagesComponent = ({
           currentChatId,
           chatd.secureAESKey,
           (change) => {
-            console.log("messagechage", change)
+            // console.log("messagechage", change)
             const messageId = change.messageId
             setMessage(prevMessages => ({ ...prevMessages, [messageId]: change }))
           },
           (err) => {
-            console.error("Error message", err)
+            // console.error("Error message", err)
           },
           (add) => {
-            console.log("added message", add)
+            // console.log("added message", add)
             const messageId = add.messageId
             setMessage(prevMessages => ({ ...prevMessages, [messageId]: add }))
           },
           (deleteM) => {
-            console.log("Delete message", deleteM)
+            // console.log("Delete message", deleteM)
             const messageId = deleteM.messageId
             setMessage(prevMessage => {
               const { [messageId]: notReqd, ...requidedMessages } = prevMessage
@@ -112,9 +112,7 @@ const MessagesComponent = ({
     <div className='h-full flex flex-col'>
       {isloading && <LoadingStatus />}
       {currentChatId && <div className='flex flex-col h-full'>
-        {console.log("Messages data", messages)}
-        {console.log("Sorted messages", sortedMessages)}
-        <MessageNavigationBar username={chatData?.chatName} />
+        <MessageNavigationBar username={chatData?.chatName} members ={chatData?.members} />
 
         <div className='flex flex-col-reverse flex-1 overflow-y-auto'>
           {sortedMessages?.map((message, messageId) => {
