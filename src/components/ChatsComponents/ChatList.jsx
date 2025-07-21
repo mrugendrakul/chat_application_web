@@ -2,7 +2,8 @@ import React from 'react'
 import ChatOrGroup from '../../dataLayer/ChatOrGroup'
 
 const ChatList = ({
-  chatData = ChatOrGroup() }
+  chatData = ChatOrGroup() ,
+  onClickChat}
 ) => {
   return (
     <button
@@ -12,11 +13,14 @@ const ChatList = ({
       hover:bg-gray-300/30
         hover:cursor-pointer
       selection:bg-gray-500/30
-      active:bg-gray-500
+      active:bg-gray-500/30
       dark:hover:bg-gray-50/40
       dark:active:bg-gray-300/40
       '
-      onClick={()=>{console.log("button presses")}}
+      onClick={()=>{
+        console.log(chatData.chatId)
+        onClickChat(chatData.chatId)
+      }}
     >
       <div key={chatData.chatId}
         className='flex 
@@ -29,7 +33,7 @@ const ChatList = ({
 
         <div className='flex flex-1 flex-col min-w-0 ml-2 mr-2'>
 
-          <p className='text-start '>
+          <p className='truncate text-start '>
             {chatData.chatName}
           </p>
           <div className='min-w-0'>

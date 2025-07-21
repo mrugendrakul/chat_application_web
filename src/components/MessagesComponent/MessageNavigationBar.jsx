@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 
-const ChatsNavigationBar = ({username,logout}) => {
+const MessageNavigationBar = ({username,members}) => {
     const [isMenuOpen,setIsMenuOpen] = useState()
 
     const toggleMenu = ()=>{
@@ -11,7 +11,7 @@ const ChatsNavigationBar = ({username,logout}) => {
       <div className="flex justify-between items-center px-4 py-3 max-w-7xl mx-auto">
         {/* Logo */}
         <div className='text-xl font-bold text-blue-700'>
-          Chats
+          {username}
         </div>
 
         <div className="relative">
@@ -25,7 +25,7 @@ const ChatsNavigationBar = ({username,logout}) => {
                 // aria-haspopup="true"
               >
                 <span className="sr-only">Open user menu</span>
-                <img className="h-6 w-6 rounded-full" src="https://placehold.co/32x32/6366f1/ffffff?text=M" alt="User avatar" />
+                <svg className='fill-current' height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"/></svg>
               </button>
             </div>
 
@@ -38,13 +38,13 @@ const ChatsNavigationBar = ({username,logout}) => {
                 // aria-labelledby="menu-button"
                 // tabIndex="-1"
               >
-                <button className='block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-start'>
+                <button className='block truncate px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-start'>
                     {username}
                 </button>
-                <button className='block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-start' role='menuitem' tabIndex="-1"
-                onClick={logout}>
-                    Logout
-                </button>
+                {members.map((member)=><button className='block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-start' role='menuitem' tabIndex="-1"
+               >
+                    {member}
+                </button>)}
               </div>
             )}
           </div>
@@ -53,4 +53,4 @@ const ChatsNavigationBar = ({username,logout}) => {
   )
 }
 
-export default ChatsNavigationBar
+export default MessageNavigationBar
