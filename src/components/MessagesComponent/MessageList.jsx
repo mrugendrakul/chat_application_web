@@ -10,7 +10,7 @@ const MessageList = ({
       {!currentSender && 
       <div
       className='flex flex-row justify-start'>
-      <div className='bg-gray-300 
+      <div className='bg-gray-300 text-black
       m-2 p-3 rounded-r-xl
        rounded-bl-xl rounded-tl-sm max-w-8/10'>
         {message.content}</div>
