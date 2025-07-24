@@ -5,17 +5,12 @@ import ChatsNavigationBar from './ChatsNavigationBar'
 import { useNavigate } from 'react-router'
 
 const ChatsComponent = (
-    {username,setCurrentChatid}
+    {username = 'mrugen@123.com'}
 ) => {
     const navigate = useNavigate()
     const [chatData,setchatData] = useState({
     })
     useEffect(()=>{
-        console.log("use effect inside the chatsComponent")
-        if(!username){
-            console.log("Skipping calling api")
-            return
-        }
         DataRepository().liveChatStore(
             username,
             (newChat)=>{
@@ -27,14 +22,9 @@ const ChatsComponent = (
             (modifiedChat)=>{
                 const modChatId = modifiedChat.chatId
                 setchatData(prevChats => ({...prevChats, [modChatId]:modifiedChat}))
-            },
-            (deletedChat)=>{
-                const delchatId = deletedChat.chatId
-                setchatData(prevChats=>{ const {[delchatId]:deletedvalue, ... remaining} = prevChats
-                return remaining})
             }
         )
-    },[username])
+    },[])
 
     const LogoutFunction = ()=>{
         DataRepository().logoutUser()
@@ -49,11 +39,11 @@ const ChatsComponent = (
     }
 
   return (
-      <div className='overflow-y-auto h-full'>
+      <div >
       <ChatsNavigationBar username={username} logout={LogoutFunction}/>
-        <div className='w-full block'>
+        <div className='dark:bg-black bg-amber-500 dark:text-white w-full block mt-14'>
         {Object.entries(chatData).map(([chatId,chat])=>(
-          <ChatList key={chatId} chatData = {chat} onClickChat={setCurrentChatid}/>
+          <ChatList key={chatId} chatData = {chat}/>
         ))}
         </div>
     </div>

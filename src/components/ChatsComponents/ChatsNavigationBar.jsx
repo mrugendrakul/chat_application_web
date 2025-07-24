@@ -7,7 +7,7 @@ const ChatsNavigationBar = ({username,logout}) => {
         setIsMenuOpen(!isMenuOpen)
     }
   return (
-    <nav className="w-full bg-white dark:bg-black shadow-md">
+    <nav className="w-full bg-white dark:bg-black shadow-md fixed top-0 z-10">
       <div className="flex justify-between items-center px-4 py-3 max-w-7xl mx-auto">
         {/* Logo */}
         <div className='text-xl font-bold text-blue-700'>
@@ -25,7 +25,7 @@ const ChatsNavigationBar = ({username,logout}) => {
                 // aria-haspopup="true"
               >
                 <span className="sr-only">Open user menu</span>
-                <img className="h-6 w-6 rounded-full" src="https://placehold.co/32x32/6366f1/ffffff?text=M" alt="User avatar" />
+                <img className="h-8 w-8 rounded-full" src="https://placehold.co/32x32/6366f1/ffffff?text=U" alt="User avatar" />
               </button>
             </div>
 

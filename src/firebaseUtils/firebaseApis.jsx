@@ -2,7 +2,7 @@ import { getAuth } from 'firebase/auth';
 import firebaseApp from './initFirebase.jsx';
 import { addDoc, arrayUnion, collection, doc, getDoc, getDocFromCache, getDocs, getFirestore, limit, onSnapshot, Query, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
 import AESKeyData from '../dataLayer/AESKeyData.jsx';
-import Message, { ContentType, MessageStatus } from '../dataLayer/Message.jsx';
+import Message from '../dataLayer/Message.jsx';
 import ChatOrGroup, { chatUser, lastMessageData } from '../dataLayer/ChatOrGroup.jsx';
 
 
@@ -14,7 +14,6 @@ function chunkArray(arr, size) {
     return chunks;
 }
 let ListenChats = null
-let ListenMessages = null
 
 function firebaseApis(
     db = getFirestore(firebaseApp),
@@ -341,14 +340,14 @@ function firebaseApis(
          * @param {(ChatOrGroup)=>{}} onDeleteChat 
          * @param {(Error)=>{}} onError 
          */
-        getLiveChatsOrGroups:(
+        getLiveChatsOrGroups(
             username,
             isGroup,
             onAddChat,
             onModifiedChat,
             onDeleteChat,
             onError
-        ) =>{
+        ) {
             if(ListenChats){
                 ListenChats()
             }
@@ -457,97 +456,13 @@ function firebaseApis(
             }
         },
 
-        getLiveMessagesForChat:(
-            currentChatId,
-            onChange,
-            onAdd,
-            onError,
-            onDelete
-        )=>{
-            if(ListenMessages){
-                ListenMessages()
-            }
-            else{
-                ListenMessages = null
-            }
-
-            const messageColl = collection(db,chatsCollectinName,currentChatId,"Messages")
-            ListenMessages = onSnapshot(messageColl,
-                (snapshot)=>{
-                    snapshot.docChanges().forEach((change)=>{
-                        const messageData = change.doc.data()
-                        const messageId = change.doc.id
-                        let messageContentType = ContentType.text
-                        switch(messageData.contentType){
-                            case "text":
-                                messageContentType = ContentType.text
-                                break;
-                            case "image":
-                                messageContentType = ContentType.image
-                                break;
-                            case "document":
-                                messageContentType = ContentType.document
-                                break;
-                            case "audio":
-                                messageContentType = ContentType.audio
-                                break;
-                            case "video":
-                                messageContentType = ContentType.video
-                                break;
-                            case "deleted":
-                                messageContentType = ContentType.deleted
-                                break;
-                            default:
-                                messageContentType = ContentType.default
-                            
-                        }
-                        const messageFromApi = Message(
-                            messageId,messageData.content,
-                            messageContentType,messageData.senderId,messageData.timeStamp,
-                            MessageStatus.Send
-                        )
-
-                        switch(change.type){
-                            case 'added':
-                                onAdd(messageFromApi);
-                                break;
-                            case 'modified':
-                                onChange(messageFromApi);
-                                break;
-                            case 'removed':
-                                onDelete(messageFromApi);
-                                break;
-                            default:
-                                // No action for unknown change type
-                                break;
-                        }
-                    })
-                },
-                (error)=>{
-                    console.error("Unable to start listending",error)
-                    onError(error)
-                    ListenMessages()
-                }
-            )
-        },
-
         stopLiveChatOrGroup:(
 
         )=>{
             if(ListenChats){
                 ListenChats()
             }
-        },
-
-        stopLiveMessages:(
-
-        )=>{
-            if(ListenMessages){
-                ListenMessages()
-            }
         }
-
-        //delete message and chat remaining to implement.
     }
 
 
@@ -561,14 +476,5 @@ function firebaseApis(
 //         console.log("Added chat test", chat)
 //     },
 
-// )
-// firebaseApis().getLiveMessagesForChat(
-//     "794831132",
-//     (message)=>{
-//         console.log("Message new",message)
-//     },
-//     (addMessage)=>{
-//         console.log("Messages add",addMessage)
-//     }
 // )
 export default firebaseApis
