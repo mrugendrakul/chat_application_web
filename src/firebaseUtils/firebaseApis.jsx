@@ -27,14 +27,14 @@ function firebaseApis(
             return new Promise((resolve, reject) => {
                 setDoc(doc(db, usersCollectionName, user.docId), user)
                     .then((response) => {
-                        // console.log("User backend added  successfully", response);
+                        // //console.log("User backend added  successfully", response);
                         return setDoc(doc(db, keysCollection, user.docId), {
                             privateRSAKey: privateKey,
                         })
 
                     })
                     .then((response) => {
-                        // console.log("User private key added to backend successfully", response);
+                        // //console.log("User private key added to backend successfully", response);
                         resolve([user, true]);
                     })
 
@@ -51,15 +51,15 @@ function firebaseApis(
         loginUser: (user) => {
             return new Promise((resolve, reject) => {
                 if (user.docId === "garbage") {
-                    console.log("Doc id is garbage");
+                    //console.log("Doc id is garbage");
                     return resolve({ privateEncryptedRSAKey: "", isMigrated: false });
                 }
 
-                console.log("Update started in API", user.docId);
+                //console.log("Update started in API", user.docId);
                 const userRef = doc(db, usersCollectionName, user.docId);
-                console.log("User ref", userRef);
+                //console.log("User ref", userRef);
                 const keyRef = doc(db, keysCollection, user.docId);
-                console.log("Key ref", keyRef);
+                //console.log("Key ref", keyRef);
                 // Step 1: update FCM
                 getDoc(userRef)
                     .then(userSnap => {
@@ -67,11 +67,11 @@ function firebaseApis(
                         let isMigrated = false;
 
                         if (!privateKey) {
-                            console.log("Private key missing, fetching backup");
+                            //console.log("Private key missing, fetching backup");
                             return getDoc(keyRef).then(keySnap => {
                                 privateKey = keySnap.get("privateRSAKey") || "";
                                 isMigrated = true;
-                                console.log("Private key fetched from backup", privateKey);
+                                //console.log("Private key fetched from backup", privateKey);
                                 return { privateKey, isMigrated, userSnap };
                             });
                         } else {
@@ -79,7 +79,7 @@ function firebaseApis(
                         }
                     })
                     .then(({ privateKey, isMigrated, userSnap }) => {
-                        console.log("Update ended in API");
+                        //console.log("Update ended in API");
                         const userData = {
                             username: userSnap.get("username") || "",
                             uniqueId: userSnap.get("uniqueId") || "",
@@ -126,7 +126,7 @@ function firebaseApis(
         },
 
         getSearchUsers: (searchUsername, currentUserName) => {
-            console.log("Started Getting search results api")
+            //console.log("Started Getting search results api")
             return new Promise((resolve, reject) => {
                 const results = [];
                 const resultRef = collection(db, usersCollectionName);
@@ -166,7 +166,7 @@ function firebaseApis(
             encryptedAESKeys = AESKeyData(),
             recentMessage
         ) => {
-            console.log("Creating chat started api")
+            //console.log("Creating chat started api")
             return new Promise((resolve, reject) => {
                 const newChat = {
                     "chatId": chatId,
@@ -190,7 +190,7 @@ function firebaseApis(
         },
 
         getPublicRSAKeyForMemeber: (listOfMembers) => {
-            console.log("Started Getting the keys for users", listOfMembers)
+            ////console.log("Started Getting the keys for users", listOfMembers)
             return new Promise((resolve, reject) => {
                 const batched = chunkArray(listOfMembers, 10)
                 const RSAMemberKeys = []
@@ -247,7 +247,7 @@ function firebaseApis(
                     const chatDataRef = doc(db, chatsCollectinName, chatId)
                     await updateDoc(chatDataRef, { lastMessage })
 
-                    console.log("Message send successfully and updated chat", messageId)
+                    //console.log("Message send successfully and updated chat", messageId)
                     return messageId
 
                 } catch (e) {
@@ -268,7 +268,7 @@ function firebaseApis(
 
         getChatData: (chatId, username) => {
             return new Promise((resolve, reject) => {
-                console.log("Getting chatData started")
+                //console.log("Getting chatData started")
                 const chatDataDoc = doc(db, chatsCollectinName, chatId)
                 getDoc(chatDataDoc)
                     .then((chatDoc) => {
@@ -277,11 +277,11 @@ function firebaseApis(
                         // const arrayTest = []
 
                         if (aesKeys != null) {
-                            console.log("Got the keys", chatData)
+                            //console.log("Got the keys", chatData)
                             const myAeskey = aesKeys.filter((key) =>
                                 key.username === username
                             )[0]
-                            console.log("My key in api", myAeskey.username)
+                            //console.log("My key in api", myAeskey.username)
 
                             resolve(
                                 ChatOrGroup(
@@ -305,7 +305,7 @@ function firebaseApis(
         },
 
         getUserChatData: (username) => {
-            console.log("Called getUserChat Data for ", username)
+            //console.log("Called getUserChat Data for ", username)
             return new Promise((resolve, reject) => {
                 const userDocument = collection(db, usersCollectionName)
                 const userQuery = query(
@@ -315,7 +315,7 @@ function firebaseApis(
                 getDocs(userQuery)
                     .then((userSnapshot) => {
                         const result = userSnapshot.docs[0].data()
-                        // console.log("user chat data",result)
+                        // //console.log("user chat data",result)
                         resolve(
                             chatUser(
                                 result.username,
@@ -366,7 +366,7 @@ function firebaseApis(
                     (snapshot) => {
                         snapshot.docChanges().forEach((change) => {
                             if (change.type === 'added') {
-                                console.log("add chat", change.doc.data())
+                                // console.log("add chat", change.doc.data())
                                 const chatData = change.doc.data()
                                 const chatLastMessage = chatData.lastMessage
                                 const lastMessage = lastMessageData(
@@ -418,7 +418,7 @@ function firebaseApis(
                                 onModifiedChat(addChat)
                             }
                             if (change.type === 'removed') {
-                                console.log("remove chat", change.doc.data())
+                                // console.log("remove chat", change.doc.data())
                                 const chatData = change.doc.data()
                                 const chatLastMessage = chatData.lastMessage
                                 const lastMessage = lastMessageData(
@@ -558,17 +558,17 @@ function firebaseApis(
 //     "mrugen@123.com",
 //     false,
 //     (chat) => {
-//         console.log("Added chat test", chat)
+//         //console.log("Added chat test", chat)
 //     },
 
 // )
 // firebaseApis().getLiveMessagesForChat(
 //     "794831132",
 //     (message)=>{
-//         console.log("Message new",message)
+//         //console.log("Message new",message)
 //     },
 //     (addMessage)=>{
-//         console.log("Messages add",addMessage)
+//         //console.log("Messages add",addMessage)
 //     }
 // )
 export default firebaseApis

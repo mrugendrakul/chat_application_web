@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import ChatsComponent from '../components/ChatsComponents/ChatsComponent'
 import MessagesComponent from '../components/MessagesComponent/MessagesComponent'
 import { onAuthStateChanged } from 'firebase/auth'
@@ -6,49 +6,100 @@ import DataRepository from '../dataLayer/dataRepository'
 import { useNavigate } from 'react-router'
 import { auth } from '../firebaseUtils/initFirebase.jsx'
 import LoadingStatus from '../components/LoadingStatus.jsx'
+import AddChatModel from '../components/ChatsComponents/AddChatModel.jsx'
 
 function MainWindow() {
-  const [currentChatId,setCurrentChatid]= useState(null)
-  const [loading,setLoading] = useState(false)
-  const [user,setUser] = useState()
+  const [currentChatId, setCurrentChatid] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [isAddingChat, setIsAddingChat] = useState(false)
+  const [user, setUser] = useState()
+  const [chatData, setchatData] = useState({
+  })
+
   const navigate = useNavigate()
 
-  useEffect(()=>{
+  const liveChatSubscriber = useCallback(() => {
+    setchatData([])
+    DataRepository().liveChatStore(
+      user?.username,
+      (newChat) => {
+        console.log("Setting data")
+        const newChatId = newChat.chatId
+        setchatData(prevChats => ({ ...prevChats, [newChatId]: newChat }))
+
+      },
+      (modifiedChat) => {
+        const modChatId = modifiedChat.chatId
+        setchatData(prevChats => ({ ...prevChats, [modChatId]: modifiedChat }))
+      },
+      (deletedChat) => {
+        const delchatId = deletedChat.chatId
+        setchatData(prevChats => {
+          const { [delchatId]: deletedvalue, ...remaining } = prevChats
+          return remaining
+        })
+      }
+    )
+  }, [user?.username])
+
+  useEffect(() => {
     setLoading(true)
-    setTimeout(()=>{
+    setTimeout(() => {
       console.log("Delay over")
 
-      const unsubcribe = onAuthStateChanged(auth,(user)=>{
-              if(user){
-              //   console.log("User is logged in", user);
-              //   return
-              //   navigate('/chatApp', {state: user.email});
-                  // Redirect to chatApp with user email
-                  // SetUser(user);
-                  DataRepository().getCurrentUser()
-                  .then((user)=>{
-                      console.log("Current user ",user)
-                      setUser(user)
-                      setLoading(false)
-                  })
-                  unsubcribe();
-              }else{
-              //   console.log("No user is logged in");
+      const unsubcribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+          //   console.log("User is logged in", user);
+          //   return
+          //   navigate('/chatApp', {state: user.email});
+          // Redirect to chatApp with user email
+          // SetUser(user);
+          DataRepository().getCurrentUser()
+            .then((user) => {
+              console.log("Current user ", user)
+              setUser(user)
               setLoading(false)
-                navigate('/');
-              }
             })
-    },0)
-  },[])
+          unsubcribe();
+        } else {
+          //   console.log("No user is logged in");
+          // unsubcribe();
+          setLoading(false)
+          navigate('/');
+        }
+      })
+    }, 0)
+  }, [])
+
+  useEffect(() => {
+    console.log("use effect inside the chatsComponent")
+    if (!user?.username) {
+      console.log("Skipping calling api")
+      return
+    }
+    liveChatSubscriber()
+
+  }, [liveChatSubscriber])
+
+
+
+
+  const ChatAddButton = () => {
+    setIsAddingChat(!isAddingChat)
+  }
 
   return (
-    <div className='flex h-screen dark:bg-black  dark:text-white'>
-      {loading && <LoadingStatus/>}
+    <div className='flex h-svh dark:bg-black  dark:text-white'>
+      {loading && <LoadingStatus />}
       {!loading && <><div className='flex flex-col w-1/4 border-r-2 '>
-        <ChatsComponent username={user?.username} setCurrentChatid={setCurrentChatid} />
+        <ChatsComponent username={user?.username} setCurrentChatid={setCurrentChatid}
+          ChatAddButton={ChatAddButton} chatData={chatData} />
       </div><div className='flex flex-col w-3/4'>
           <MessagesComponent currentChatId={currentChatId} currentUsername={user?.username} />
-        </div></>}
+        </div>
+        {isAddingChat && <AddChatModel ChatAddButton={ChatAddButton} currentUser={user} reloadChat={liveChatSubscriber}/>}
+      </>
+      }
     </div>
   )
 }

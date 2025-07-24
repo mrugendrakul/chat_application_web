@@ -20,6 +20,7 @@ const MessagesComponent = ({
       return
     }
     setIsLoading(true)
+    setMessage([])
     DataRepository().getDataChat(
       currentChatId, currentUsername
     )
