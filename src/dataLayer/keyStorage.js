@@ -20,7 +20,7 @@ function saveKeyToBrowser(keyObj) {
     dbPromise()
       .then((db) => db.put('keys', keyObj))
       .then(() => {
-        //console.log('Key saved:', keyObj.keyId);
+        console.log('Key saved:', keyObj.keyId);
         resolve(true);
       })
       .catch((err) => {
@@ -41,7 +41,7 @@ function getKeyFromBrowser(keyId) {
       .then((db) => db.get('keys', keyId))
       .then((result) => {
         if (result) {
-          //console.log('Key retrieved:', result);
+          console.log('Key retrieved:', result);
           resolve(result);
         } else {
           reject('Key not found');
@@ -64,7 +64,7 @@ function deleteKeyFromBrowser(keyId) {
     dbPromise()
       .then((db) => db.delete('keys', keyId))
       .then(() => {
-        //console.log('Key deleted:', keyId);
+        console.log('Key deleted:', keyId);
         resolve(true);
       })
       .catch((err) => {
