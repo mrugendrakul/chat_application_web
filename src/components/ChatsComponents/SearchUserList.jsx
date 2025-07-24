@@ -1,28 +1,25 @@
 import React from 'react'
-import ChatOrGroup from '../../dataLayer/ChatOrGroup'
 
-const ChatList = ({
-  chatData = ChatOrGroup() ,
-  onClickChat}
-) => {
+const SearchUserList = ({user,addChatUser,isSelected}) => {
   return (
     <button
-      className='flex
+      className={`flex
         justify-start
         w-full
-      hover:bg-gray-300/30
+        rounded-md
         hover:cursor-pointer
       selection:bg-gray-500/30
-      active:bg-gray-500/30
+      
       dark:hover:bg-gray-50/40
       dark:active:bg-gray-300/40
-      '
+        ${isSelected?'bg-blue-600 hover:bg-blue-700 text-white active:bg-blue-800':'hover:bg-gray-300/30 active:bg-gray-500/30'}
+      `}
       onClick={()=>{
-        console.log(chatData.chatId)
-        onClickChat(chatData.chatId)
+        console.log("user clicked",user)
+        addChatUser(user)
       }}
     >
-      <div key={chatData.chatId}
+      <div key={user.username}
         className='flex 
         flex-row
         items-center
@@ -34,17 +31,13 @@ const ChatList = ({
         <div className='flex flex-1 flex-col min-w-0 ml-2 mr-2'>
 
           <p className='truncate text-start '>
-            {chatData.chatName}
+            {user.username}
           </p>
-          <div className='min-w-0'>
-            <p className='truncate text-start'>
-              {chatData.lastMessage.content}
-            </p>
-          </div>
+          
         </div>
       </div>
     </button>
   )
 }
 
-export default ChatList
+export default SearchUserList

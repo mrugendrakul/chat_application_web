@@ -172,7 +172,10 @@ function MainChatApp() {
                 // console.log("Message Encrypted is ", stringEnyMessage)
 
                 // const messageId = await 
-                DataRepository().sendMessage(Message("",encMes,ContentType.text,User.username,Timestamp.now(),MessageStatus.Sending),
+                DataRepository().sendMessage(
+                    Message("",encMes,ContentType.text,
+                        User.username,Timestamp.now(),
+                        MessageStatus.Sending),
                 "696312966",key
                 )
                 .then((MessageId)=>{
