@@ -60,10 +60,14 @@ function apiChatToOurChat(onChatFunction, chatData, userPrivateKey, myUsername) 
                     chatData.lastMessage.content,
                     aeskeyArrya
                 )
+
+                const latestChatOrGroupName = chatData.isGroup?chatData.chatName:tempUsername
+                console.log("ChatData addition,",latestChatOrGroupName,chatData.isGroup)
+
                 const latestChat = ChatOrGroup(
                     chatData.chatId,
-                    tempUsername,
-                    false,
+                    latestChatOrGroupName,
+                    chatData.isGroup,
                     chatData.members,
                     chatData.chatPic,
                     memInfos,
@@ -113,10 +117,12 @@ function apiChatToOurChat(onChatFunction, chatData, userPrivateKey, myUsername) 
                     chatData.lastMessage.content,
                     aeskeyArrya
                 )
+                const latestChatOrGroupName = chatData.isGroup?chatData.chatName:tempUsername
+                console.log("ChatData addition,",latestChatOrGroupName,chatData.isGroup)
                 const latestChat = ChatOrGroup(
                     chatData.chatId,
-                    tempUsername,
-                    false,
+                    latestChatOrGroupName,
+                    chatData.isGroup,
                     chatData.members,
                     chatData.chatPic,
                     memInfos,
@@ -609,7 +615,7 @@ function DataRepository(
                         false,
 
                         (newChat) => {
-                            // console.log("Getting live chats data repo")
+                            console.log("Getting live chats data repo",newChat)
                             apiChatToOurChat(onChatAdd,newChat,userPrivateKey,myUsername)
                         },
                         (modifiedChat) => {
@@ -635,7 +641,7 @@ function DataRepository(
                         true,
 
                         (newChat) => {
-                            // console.log("Getting live chats data repo")
+                            console.log("Getting live Group data repo",newChat)
                             apiChatToOurChat(onChatAdd,newChat,userPrivateKey,myUsername)
                         },
                         (modifiedChat) => {

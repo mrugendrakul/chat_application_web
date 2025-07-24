@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import ChatsComponent from '../components/ChatsComponents/ChatsComponent'
 import MessagesComponent from '../components/MessagesComponent/MessagesComponent'
 import { onAuthStateChanged } from 'firebase/auth'
@@ -13,17 +13,18 @@ function MainWindow() {
   const [loading, setLoading] = useState(false)
   const [isAddingChat, setIsAddingChat] = useState(false)
   const [user, setUser] = useState()
-  const [chatData, setchatData] = useState({
-  })
+  const [chatData, setchatData] = useState({})
+  const [groups,setGroups] = useState({})
 
   const navigate = useNavigate()
 
   const liveChatSubscriber = useCallback(() => {
-    setchatData([])
+    console.log("Chat subs")
+    setchatData({})
     DataRepository().liveChatStore(
       user?.username,
       (newChat) => {
-        console.log("Setting data")
+        console.log("Setting data",newChat)
         const newChatId = newChat.chatId
         setchatData(prevChats => ({ ...prevChats, [newChatId]: newChat }))
 
@@ -41,6 +42,31 @@ function MainWindow() {
       }
     )
   }, [user?.username])
+
+  const liveGroupSubscriber = useCallback(()=>{
+    setGroups({})
+    console.log("groups subs")
+    DataRepository().liveGroupStore(
+      user?.username,
+      (newChat) => {
+        console.log("Setting grp")
+        const newChatId = newChat.chatId
+        setGroups(prevChats => ({ ...prevChats, [newChatId]: newChat }))
+
+      },
+      (modifiedChat) => {
+        const modChatId = modifiedChat.chatId
+        setGroups(prevChats => ({ ...prevChats, [modChatId]: modifiedChat }))
+      },
+      (deletedChat) => {
+        const delchatId = deletedChat.chatId
+        setGroups(prevChats => {
+          const { [delchatId]: deletedvalue, ...remaining } = prevChats
+          return remaining
+        })
+      }
+    )
+  },[user?.username])
 
   useEffect(() => {
     setLoading(true)
@@ -78,8 +104,25 @@ function MainWindow() {
       return
     }
     liveChatSubscriber()
+    // liveGroupSubscriber()
 
-  }, [liveChatSubscriber])
+  }, [liveChatSubscriber,liveGroupSubscriber])
+
+  const sortedChats = useMemo(()=>{
+    const chatsValues = Object.values(chatData)
+    return chatsValues.sort((a,b)=>{
+      const dateA = a?.lastMessage?.timeStamp?.toDate ? a.lastMessage?.timeStamp.toDate() : null;
+      const dateB = b?.lastMessage?.timeStamp?.toDate ? b.lastMessage?.timeStamp.toDate() : null;
+
+      // If either date is invalid or null, treat them as equal to prevent sorting errors.
+      if (!dateA || !dateB) {
+        return 0;
+      }
+
+      // For ascending order (oldest first), subtract dateA from dateB.
+      return dateB - dateA;
+    })
+  },[chatData])
 
 
 
@@ -93,7 +136,7 @@ function MainWindow() {
       {loading && <LoadingStatus />}
       {!loading && <><div className='flex flex-col w-1/4 border-r-2 '>
         <ChatsComponent username={user?.username} setCurrentChatid={setCurrentChatid}
-          ChatAddButton={ChatAddButton} chatData={chatData} />
+          ChatAddButton={ChatAddButton} chatData={sortedChats} groupData = {groups} />
       </div><div className='flex flex-col w-3/4'>
           <MessagesComponent currentChatId={currentChatId} currentUsername={user?.username} />
         </div>

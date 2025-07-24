@@ -359,7 +359,7 @@ function firebaseApis(
             const chatsQuery = query(
                 chatscoll,
                 where("members", "array-contains", username),
-                where("isGroup", "==", isGroup)
+                // where("isGroup", "==", isGroup)
             )
             try{
                 ListenChats = onSnapshot(chatsQuery,
@@ -372,7 +372,7 @@ function firebaseApis(
                                 const lastMessage = lastMessageData(
                                     chatLastMessage[2] || "",
                                     chatLastMessage[0],
-                                    lastMessageData[1]
+                                    chatLastMessage[1]
                                 )
                                 const chatAesKey = chatData.encryptedAESKeys
                                 const mySecureAesKey = chatAesKey.filter((key) =>
@@ -398,7 +398,7 @@ function firebaseApis(
                                 const lastMessage = lastMessageData(
                                     chatLastMessage[2] || "",
                                     chatLastMessage[0],
-                                    lastMessageData[1]
+                                    chatLastMessage[1]
                                 )
                                 const chatAesKey = chatData.encryptedAESKeys
                                 const mySecureAesKey = chatAesKey.filter((key) =>
@@ -424,7 +424,7 @@ function firebaseApis(
                                 const lastMessage = lastMessageData(
                                     chatLastMessage[2] || "",
                                     chatLastMessage[0],
-                                    lastMessageData[1]
+                                    chatLastMessage[1]
                                 )
                                 const chatAesKey = chatData.encryptedAESKeys
                                 const mySecureAesKey = chatAesKey.filter((key) =>

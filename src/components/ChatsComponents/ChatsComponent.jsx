@@ -1,4 +1,3 @@
-import React, {  useCallback, useEffect, useState } from 'react'
 import DataRepository from '../../dataLayer/dataRepository'
 import ChatList from './ChatList'
 import ChatsNavigationBar from './ChatsNavigationBar'
@@ -6,42 +5,42 @@ import { useNavigate } from 'react-router'
 import AddChatModel from './AddChatModel'
 
 const ChatsComponent = (
-    { username, setCurrentChatid, ChatAddButton,chatData }
+    { username, setCurrentChatid, ChatAddButton, chatData, groupData }
 ) => {
     const navigate = useNavigate()
     // const [chatData, setchatData] = useState({
     // })
 
-//   useEffect(() => {
-//     console.log("use effect inside the chatsComponent")
-//     if (!username) {
-//       console.log("Skipping calling api")
-//       return
-//     }
+    //   useEffect(() => {
+    //     console.log("use effect inside the chatsComponent")
+    //     if (!username) {
+    //       console.log("Skipping calling api")
+    //       return
+    //     }
 
-//     DataRepository().liveChatStore(
-//       username,
-//       (newChat) => {
-//         console.log("Setting data")
-//         const newChatId = newChat.chatId
-//         setchatData(prevChats => ({ ...prevChats, [newChatId]: newChat }))
+    //     DataRepository().liveChatStore(
+    //       username,
+    //       (newChat) => {
+    //         console.log("Setting data")
+    //         const newChatId = newChat.chatId
+    //         setchatData(prevChats => ({ ...prevChats, [newChatId]: newChat }))
 
-//       },
-//       (modifiedChat) => {
-//         const modChatId = modifiedChat.chatId
-//         setchatData(prevChats => ({ ...prevChats, [modChatId]: modifiedChat }))
-//       },
-//       (deletedChat) => {
-//         const delchatId = deletedChat.chatId
-//         setchatData(prevChats => {
-//           const { [delchatId]: deletedvalue, ...remaining } = prevChats
-//           return remaining
-//         })
-//       }
-//     )
-//   }, [username])
+    //       },
+    //       (modifiedChat) => {
+    //         const modChatId = modifiedChat.chatId
+    //         setchatData(prevChats => ({ ...prevChats, [modChatId]: modifiedChat }))
+    //       },
+    //       (deletedChat) => {
+    //         const delchatId = deletedChat.chatId
+    //         setchatData(prevChats => {
+    //           const { [delchatId]: deletedvalue, ...remaining } = prevChats
+    //           return remaining
+    //         })
+    //       }
+    //     )
+    //   }, [username])
 
-    console.log("chat data ,",chatData)
+    console.log("chat data ,", chatData)
 
     const LogoutFunction = () => {
         DataRepository().logoutUser()
@@ -58,14 +57,17 @@ const ChatsComponent = (
 
     return (
         <div className='overflow-y-auto h-full'>
-            <ChatsNavigationBar username={username} logout={LogoutFunction} ChatAddButton={ChatAddButton}/>
+            <ChatsNavigationBar username={username} logout={LogoutFunction} ChatAddButton={ChatAddButton} />
             <div className='w-full block'>
-                {Object.entries(chatData).map(([chatId, chat]) => (
+
+                {chatData.map((chat, chatId) => (
                     <ChatList key={chatId} chatData={chat} onClickChat={setCurrentChatid} />
                 ))}
+
+
             </div>
-            
-            
+
+
         </div>
     )
 }

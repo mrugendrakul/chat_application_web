@@ -13,7 +13,7 @@ function chatUser(
 function lastMessageData(
     sender = "",
     content = "",
-    timeStamp=""
+    timeStamp=Timestamp.now()
 ){
     return{sender,
     content,
