@@ -9,6 +9,7 @@ const ChatList = ({
     <button
       className='flex
         justify-start
+        
         w-full
       hover:bg-gray-300/30
         hover:cursor-pointer
