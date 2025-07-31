@@ -46,7 +46,7 @@ const ChatsComponent = (
         DataRepository().logoutUser()
             .then((val) => {
                 console.log("Logout success", val)
-                navigate('/')
+                navigate('/chatApp')
             })
             .catch((err) => {
                 console.error("Unable to logout", err)

@@ -17,7 +17,7 @@ function LoginScreen() {
       useEffect(()=>{ const subscriber = onAuthStateChanged(auth,(user)=>{
                   if(user){
                     console.log("User is logged in", user);
-                    navigate('/chatApp', {state: user.email});
+                    navigate('/', {state: user.email});
                     subscriber() // Redirect to chatApp with user email
                   }else{
                     console.log("No user is logged in");
@@ -61,7 +61,7 @@ function LoginScreen() {
             .then(([user,keystatus]) => {
                 setIsLoading(false);
                 console.log("User logged in successfully in form", user, keystatus);
-                navigate('/chatApp', { state: user.email }); // Redirect to chatApp with user
+                navigate('/', { state: user.email }); // Redirect to chatApp with user
             })
             .catch(([error]) => {
                 setIsLoading(false);

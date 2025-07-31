@@ -15,11 +15,11 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
     <Routes>
-      <Route path = '/' element={<App />} />
+      <Route path = '/chatApp' element={<App />} />
       <Route path='/login' element = {<LoginScreen/>}/>
       <Route path='/signup' element = {<SignupScreen/>}/>
       <Route path='/testingSide' element = {<MainChatApp/>}/>
-      <Route path='chatApp' element = {<MainWindow/>}/>
+      <Route path='/' element = {<MainWindow/>}/>
       <Route path='*' element={<h1>404 Not Found</h1>} />
     </Routes>
       

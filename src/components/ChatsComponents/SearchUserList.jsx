@@ -10,9 +10,8 @@ const SearchUserList = ({user,addChatUser,isSelected}) => {
         hover:cursor-pointer
       selection:bg-gray-500/30
       
-      dark:hover:bg-gray-50/40
-      dark:active:bg-gray-300/40
-        ${isSelected?'bg-blue-600 hover:bg-blue-700 text-white active:bg-blue-800':'hover:bg-gray-300/30 active:bg-gray-500/30'}
+     
+        ${isSelected?'bg-blue-600 hover:bg-blue-700 text-white active:bg-blue-800':'hover:bg-gray-300/30 active:bg-gray-500/30 '}
       `}
       onClick={()=>{
         console.log("user clicked",user)

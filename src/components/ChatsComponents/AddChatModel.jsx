@@ -90,17 +90,18 @@ const AddChatModel = ({ ChatAddButton,currentUser,reloadChat }) => {
             // onClick={ChatAddButton}
         >
 
-            <div className='bg-white md:w-4/10 md:h-8/10 min-w-md md:rounded-3xl flex flex-col md:p-2 p-4 h-full w-full rounded-none'>
+            <div className='bg-white md:w-4/10 md:h-8/10 min-w-md md:rounded-3xl flex flex-col md:p-2 p-4 h-full w-full rounded-none 
+            dark:bg-gray-800'>
                 <div className=' p-4 font-bold text-2xl  flex items-center'>
                     Add new Chat.
                 </div>
 
-                <div className='relative flex flex-row gap-1 m-2 p-1 bg-gray-100 rounded-md'>
+                <div className='relative flex flex-row gap-1 m-2 p-1 bg-gray-100 rounded-md dark:bg-gray-600'>
                     <div
                         className={`
                     absolute w-[calc(50%-0.25rem)] top-1 h-[calc(100%-0.5em)] left-1 p-2 rounded-md bg-white shadow-md
-                    transition-transform ease-in-out
-                    ${type === "chat" ? 'translate-0 bg-white' : 'translate-x-full bg-gray-300'}`}
+                    transition-transform ease-in-out dark:bg-gray-400
+                    ${type === "chat" ? 'translate-0 bg-white' : 'translate-x-full'}`}
                     >
 
                     </div>
@@ -126,7 +127,8 @@ const AddChatModel = ({ ChatAddButton,currentUser,reloadChat }) => {
                     (type === "group")&& 
                     <input
                             type='text'
-                            className='p-2 mx-2 mb-4 bg-gray-100 rounded-md focus:outline-none text-md focus:ring-2 focus:ring-blue-400 transition-discrete'
+                            className='p-2 mx-2 mb-4 bg-gray-100 rounded-md focus:outline-none text-md focus:ring-2 focus:ring-blue-400 transition-discrete
+                            dark:bg-gray-600'
                             placeholder='Group name'
                             value={chatName}
                             onChange={(e)=>setChatName(e.target.value)}
@@ -146,7 +148,8 @@ const AddChatModel = ({ ChatAddButton,currentUser,reloadChat }) => {
                         ><path d="M380-320q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l224 224q11 11 11 28t-11 28q-11 11-28 11t-28-11L532-372q-30 24-69 38t-83 14Zm0-80q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z" /></svg>
                         <input
                             type='text'
-                            className='relative p-2 pl-12 bg-gray-100 flex-8/10 rounded-md focus:outline-none text-md focus:ring-2 focus:ring-blue-400'
+                            className='relative p-2 pl-12 bg-gray-100 flex-8/10 rounded-md focus:outline-none text-md focus:ring-2 focus:ring-blue-400
+                            dark:bg-gray-600'
                             placeholder='Search user'
                             value={searchName}
                             onChange={(e)=>{setSearchName(e.target.value)}}
