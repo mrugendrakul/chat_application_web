@@ -12,7 +12,7 @@ function SignupScreen() {
    useEffect(()=>{ onAuthStateChanged(auth,(user)=>{
             if(user){
               console.log("User is logged in", user);
-              navigate('/chatApp', {state: user.email}); // Redirect to chatApp with user email
+              navigate('/', {state: user.email}); // Redirect to chatApp with user email
             }else{
               console.log("No user is logged in");
             }
@@ -73,7 +73,7 @@ function SignupScreen() {
             .then(([user, signkeyStatus]) => {
                 console.log("User signuped in successfully", user, signkeyStatus);
                 setIsLoading(false);
-                navigate('/chatApp', { state: user.email }); // Redirect to chatApp with user email
+                navigate('/', { state: user.email }); // Redirect to chatApp with user email
             })
             .catch(([error, success]) => { 
                 console.error("Error logging in", error, success);

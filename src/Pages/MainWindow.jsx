@@ -91,7 +91,7 @@ function MainWindow() {
           //   console.log("No user is logged in");
           // unsubcribe();
           setLoading(false)
-          navigate('/');
+          navigate('/chatApp');
         }
       })
     }, 0)
