@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router'
 import AddChatModel from './AddChatModel'
 
 const ChatsComponent = (
-    { username, setCurrentChatid, ChatAddButton, chatData, groupData }
+    { username, setCurrentChatid, ChatAddButton, chatData }
 ) => {
     const navigate = useNavigate()
     // const [chatData, setchatData] = useState({
