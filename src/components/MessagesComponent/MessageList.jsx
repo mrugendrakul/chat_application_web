@@ -6,7 +6,6 @@ const MessageList = ({
     message = Message(),
     currentSender
 }) => {
-  console.log("message is",message)
   return (
     <div>
       {!currentSender && 
@@ -20,7 +19,7 @@ const MessageList = ({
       m-2 p-3 rounded-r-xl
        rounded-bl-xl rounded-tl-sm max-w-8/10 flex flex-col'>
         {message.content}
-        <p className='mt-2 p-0 text-sm border-t-1 border-t-blue-400'>{message.timeStamp.seconds}</p>
+        <p className='mt-2 p-0 text-sm border-t-1 border-t-gray-800'>{message.timeStamp.toDate().toLocaleString()}</p>
         
         </div>
       </div>
@@ -34,7 +33,9 @@ const MessageList = ({
       m-2 p-3 rounded-l-xl
        rounded-br-xl rounded-tr-sm
        max-w-8/10 '>
-        {message.content}</div>
+        {message.content}
+        <p className='mt-2 p-0 text-sm border-t-1 border-t-gray-800'>{message.timeStamp.toDate().toLocaleString()}</p>
+        </div>
       </div>}
     </div>
   )
