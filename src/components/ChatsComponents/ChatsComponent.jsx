@@ -59,7 +59,7 @@ const ChatsComponent = (
             <div className='w-full block'>
 
                 {chatData.map((chat, chatId) => (
-                    <ChatList key={chatId} chatData={chat} onClickChat={setCurrentChatid} />
+                    <ChatList key={chatId} chatData={chat} onClickChat={setCurrentChatid} username={username}/>
                 ))}
 
 
