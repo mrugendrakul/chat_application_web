@@ -40,8 +40,6 @@ const ChatsComponent = (
     //     )
     //   }, [username])
 
-    console.log("chat data ,", chatData)
-
     const LogoutFunction = () => {
         DataRepository().logoutUser()
             .then((val) => {

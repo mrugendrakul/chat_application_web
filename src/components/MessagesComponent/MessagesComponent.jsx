@@ -25,7 +25,6 @@ const MessagesComponent = ({
       currentChatId, currentUsername
     )
       .then((chatd) => {
-        console.log("Getting chatData")
         setChatData(chatd)
         setIsLoading(false)
         DataRepository().liveMessages(
@@ -37,7 +36,7 @@ const MessagesComponent = ({
             setMessage(prevMessages => ({ ...prevMessages, [messageId]: change }))
           },
           (err) => {
-            // console.error("Error message", err)
+            console.error("Error message", err)
           },
           (add) => {
             // console.log("added message", add)
@@ -48,6 +47,7 @@ const MessagesComponent = ({
             // console.log("Delete message", deleteM)
             const messageId = deleteM.messageId
             setMessage(prevMessage => {
+              // eslint-disable-next-line no-unused-vars
               const { [messageId]: notReqd, ...requidedMessages } = prevMessage
               return requidedMessages
             })
@@ -63,7 +63,7 @@ const MessagesComponent = ({
     //   return
     // }
   }
-    , [currentChatId])
+    , [currentChatId,currentUsername])
 
   const sortedMessages = useMemo(() => {
     console.log("Re-sorting messages...");
@@ -109,6 +109,7 @@ const MessagesComponent = ({
       })
   }
 
+
   return (
     <div className='h-full flex flex-col'>
       {isloading && <LoadingStatus />}
@@ -117,7 +118,7 @@ const MessagesComponent = ({
 
         <div className='flex flex-col-reverse flex-1 overflow-y-auto'>
           {sortedMessages?.map((message, messageId) => {
-            return <MessageList key={messageId} message={message} currentSender={message.senderId === currentUsername} />
+            return <MessageList key={messageId} message={message} currentSender={message.senderId === currentUsername} isGroup={chatData?.isGroup}/>
           })}
         </div>
         <div className="p-4 border-t">
