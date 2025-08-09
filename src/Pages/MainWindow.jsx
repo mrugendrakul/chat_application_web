@@ -86,6 +86,11 @@ function MainWindow() {
               setUser(user)
               setLoading(false)
             })
+            .catch((err)=>{
+              console.error("Unable to get current user",err)
+              DataRepository().logoutUser()
+              navigate('/chatApp')
+            })
           unsubcribe();
         } else {
           //   console.log("No user is logged in");

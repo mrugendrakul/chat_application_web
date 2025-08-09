@@ -62,7 +62,7 @@ function apiChatToOurChat(onChatFunction, chatData, userPrivateKey, myUsername) 
                 )
 
                 const latestChatOrGroupName = chatData.isGroup?chatData.chatName:tempUsername
-                console.log("ChatData addition,",latestChatOrGroupName,chatData.isGroup)
+                // console.log("ChatData addition,",latestChatOrGroupName,chatData.isGroup)
 
                 const latestChat = ChatOrGroup(
                     chatData.chatId,
@@ -118,7 +118,7 @@ function apiChatToOurChat(onChatFunction, chatData, userPrivateKey, myUsername) 
                     aeskeyArrya
                 )
                 const latestChatOrGroupName = chatData.isGroup?chatData.chatName:tempUsername
-                console.log("ChatData addition,",latestChatOrGroupName,chatData.isGroup)
+                // console.log("ChatData addition,",latestChatOrGroupName,chatData.isGroup)
                 const latestChat = ChatOrGroup(
                     chatData.chatId,
                     latestChatOrGroupName,
@@ -259,17 +259,21 @@ function DataRepository(
                 getKeyFromBrowser("1")
                     .then((browswerKeys) => {
                         // console.log("Getting key from browser")
-                        const curUser = User({
+                        if(browswerKeys.privateKey && browswerKeys.publicKey)
+                            {const curUser = User({
                             username: currentUser.email,
                             docId: currentUser.uid,
                             publicRSAKey: browswerKeys.publicKey,
                             privateEncryptedRSAKey: browswerKeys.privateKey,
                             isMigrated: true
                         })
-                        resolve(curUser)
+                        resolve(curUser)}
+                        else{
+                            reject("Error getting user")
+                        }
                     })
                     .catch((error) => {
-                        console.error("Error getting user", error)
+                        console.error("Error getting user::", error)
                         reject(error)
                     })
             })
@@ -317,7 +321,7 @@ function DataRepository(
             profilePhoto,
             isGroup,
         ) => {
-            console.log("members adding",memberUsers)
+            // console.log("members adding",memberUsers)
             memberUsers.push(currentUser.username)
             // console.log("Chat addition started for members,", memberUsers)
             const chatId = generateSixDigitUUID(24)
@@ -474,12 +478,9 @@ function DataRepository(
                                         .catch((error) => {
                                             console.error("Error getting key from idb", error)
 
-                                            // console.log("no key on idb")
-
-
                                             const DecryptKeyArray = EncryptionService.decryptAESKeyWithPrivateKey(
                                                 ChatData.secureAESKey,
-                                                privateKey
+                                                privateKey.privateKey
                                             )
                                             const AesString = EncryptionService.byteArrayToString(DecryptKeyArray)
                                             const chatName = ChatData.chatName
@@ -615,7 +616,7 @@ function DataRepository(
                         false,
 
                         (newChat) => {
-                            console.log("Getting live chats data repo",newChat)
+                            // console.log("Getting live chats data repo",newChat)
                             apiChatToOurChat(onChatAdd,newChat,userPrivateKey,myUsername)
                         },
                         (modifiedChat) => {
@@ -641,7 +642,7 @@ function DataRepository(
                         true,
 
                         (newChat) => {
-                            console.log("Getting live Group data repo",newChat)
+                            // console.log("Getting live Group data repo",newChat)
                             apiChatToOurChat(onChatAdd,newChat,userPrivateKey,myUsername)
                         },
                         (modifiedChat) => {
