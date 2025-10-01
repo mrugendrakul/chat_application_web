@@ -695,10 +695,9 @@ function DataRepository(
                             encryptedContent,
                             aeskeyArrya
                         )
-
                         const latestaddMessage = Message(
                             addMessage.messageId,
-                            decryptedContent,
+                            `${decryptedContent}`,
                             addMessage.contentType,
                             addMessage.senderId,
                             addMessage.timeStamp,

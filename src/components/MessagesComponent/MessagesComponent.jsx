@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import MessageNavigationBar from './MessageNavigationBar'
 import DataRepository from '../../dataLayer/dataRepository'
 import MessageList from './MessageList'
@@ -14,6 +14,10 @@ const MessagesComponent = ({
   const [chatData, setChatData] = useState(null)
   const [isloading, setIsLoading] = useState(false)
   const [newMessage, setNewMessage] = useState("")
+  const messageTextAreaRef = useRef(null)
+  const minHeight = 48
+  const maxHeight = 240
+
   useEffect(() => {
     if (!currentChatId) {
       console.log("Skipping message api")
@@ -109,6 +113,16 @@ const MessagesComponent = ({
       })
   }
 
+  useLayoutEffect(()=>{
+    const textArea = messageTextAreaRef.current;
+    console.log("Message height change --->")
+    if(textArea){
+      textArea.style.height = 'auto';
+      const newHeight = Math.min(Math.max(minHeight,textArea.scrollHeight),maxHeight)
+      textArea.style.height =`${newHeight}px`
+    }
+  },[newMessage])
+
 
   return (
     <div className='h-full flex flex-col'>
@@ -123,12 +137,15 @@ const MessagesComponent = ({
         </div>
         <div className="p-4 border-t">
           <div className="flex space-x-2">
-            <input
+            <textarea
+            ref={messageTextAreaRef}
               type="text"
+              rows={1}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type a message..."
               className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={{height:`${minHeight}px`, resize:'none'}}
             />
             <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 active:bg-blue-900"
               onClick={SendMessage}>

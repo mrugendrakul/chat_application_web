@@ -24,7 +24,6 @@ function MainWindow() {
     DataRepository().liveChatStore(
       user?.username,
       (newChat) => {
-        console.log("Setting data",newChat)
         const newChatId = newChat.chatId
         setchatData(prevChats => ({ ...prevChats, [newChatId]: newChat }))
 
@@ -36,6 +35,7 @@ function MainWindow() {
       (deletedChat) => {
         const delchatId = deletedChat.chatId
         setchatData(prevChats => {
+          // eslint-disable-next-line no-unused-vars
           const { [delchatId]: deletedvalue, ...remaining } = prevChats
           return remaining
         })
@@ -61,6 +61,7 @@ function MainWindow() {
       (deletedChat) => {
         const delchatId = deletedChat.chatId
         setGroups(prevChats => {
+          // eslint-disable-next-line no-unused-vars
           const { [delchatId]: deletedvalue, ...remaining } = prevChats
           return remaining
         })
