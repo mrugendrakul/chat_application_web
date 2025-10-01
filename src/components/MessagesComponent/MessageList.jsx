@@ -32,7 +32,7 @@ const MessageList = ({
           <div className='bg-blue-400 text-white
       m-2 p-3 rounded-l-xl
        rounded-br-xl rounded-tr-sm
-       max-w-8/10 flex flex-row'
+       max-w-8/10 flex flex-col'
        style={{whiteSpace:'pre-wrap'}}>
             {message.content}
             <p className='mt-2 p-0 text-sm border-t-1 border-t-gray-800'>{message.timeStamp.toDate().toLocaleString()}</p>
