@@ -1,4 +1,4 @@
-import React, {  useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 // import personIcon from './assets/person.svg'
 // import visibilityIcon from './assets/visibility.svg'
 // import visibilityOffIcon from './assets/visibility_off.svg'
@@ -14,26 +14,19 @@ import LoadingStatus from '../components/LoadingStatus.jsx';
 function LoginScreen() {
     const navigate = useNavigate();
     const auth = getAuth(firebaseApp);
-      useEffect(()=>{ const subscriber = onAuthStateChanged(auth,(user)=>{
-                  if(user){
-                    console.log("User is logged in", user);
-                    navigate('/', {state: user.email});
-                    subscriber() // Redirect to chatApp with user email
-                  }else{
-                    console.log("No user is logged in");
-                    subscriber()
-                  }
-                })},[])
-    // useEffect(() => {
-    //     const user = auth.currentUser;
-    //     if (user) {
-    //         console.log("User is already logged in", user);
-    //         navigate('/chatApp', { state: user.email }); // Redirect to chatApp with user email
-    //     }
-    //     else {
-    //         console.log("No user is logged in, you can login now");
-    //     }
-    // }, [])
+    useEffect(() => {
+        const subscriber = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log("User is logged in", user);
+                navigate('/', { state: user.email });
+                subscriber() // Redirect to chatApp with user email
+            } else {
+                console.log("No user is logged in");
+                subscriber()
+            }
+        })
+    }, [])
+
     const [formData, setFormData] = useState({
         email: "",
         password: ""
@@ -57,8 +50,8 @@ function LoginScreen() {
         e.preventDefault();
         setIsLoading(true);
         // console.log("Form Submitted", formData);
-       DataRepository().loginUser(formData.email, formData.password)
-            .then(([user,keystatus]) => {
+        DataRepository().loginUser(formData.email, formData.password)
+            .then(([user, keystatus]) => {
                 setIsLoading(false);
                 console.log("User logged in successfully in form", user, keystatus);
                 navigate('/', { state: user.email }); // Redirect to chatApp with user
@@ -74,15 +67,11 @@ function LoginScreen() {
             password: ""
         });
     }
-    // const LoadingBlock =()=>{
-    //     if(isLoading){
-    //         return <LoadingStatus/>
-    //     }
-    // }
+
     return (
         <div>
-            {isLoading && <LoadingStatus/>}
-            
+            {isLoading && <LoadingStatus />}
+
             <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-800">
                 <div className="bg-white p-8 rounded-lg shadow-md w-96 dark:bg-gray-900">
                     <h2 className="text-2xl font-bold mb-6 text-center text-blue-500">Login</h2>

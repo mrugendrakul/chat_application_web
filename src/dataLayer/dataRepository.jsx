@@ -259,12 +259,12 @@ function DataRepository(
                 getKeyFromBrowser("1")
                     .then((browswerKeys) => {
                         // console.log("Getting key from browser")
-                        if(browswerKeys.privateKey && browswerKeys.publicKey)
+                        if( browswerKeys.publicKey)
                             {const curUser = User({
                             username: currentUser.email,
                             docId: currentUser.uid,
                             publicRSAKey: browswerKeys.publicKey,
-                            privateEncryptedRSAKey: browswerKeys.privateKey,
+                            // privateEncryptedRSAKey: browswerKeys.privateKey,
                             isMigrated: true
                         })
                         resolve(curUser)}

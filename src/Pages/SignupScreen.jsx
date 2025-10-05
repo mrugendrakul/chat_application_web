@@ -1,4 +1,4 @@
-import React, {  useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router';
 import firebaseApp from '../firebaseUtils/initFirebase.jsx';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
@@ -9,24 +9,19 @@ import LoadingStatus from '../components/LoadingStatus.jsx';
 function SignupScreen() {
     const navigate = useNavigate();
     const auth = getAuth(firebaseApp);
-   useEffect(()=>{ onAuthStateChanged(auth,(user)=>{
-            if(user){
-              console.log("User is logged in", user);
-              navigate('/', {state: user.email}); // Redirect to chatApp with user email
-            }else{
-              console.log("No user is logged in");
+    useEffect(() => {
+        const subscriber = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log("User is logged in", user);
+                navigate('/', { state: user.email });
+                subscriber()
+            } else {
+                console.log("No user is logged in");
+                subscriber()
             }
-          })},[])
-    // useEffect(() => {
-    //     const user = auth.currentUser;
-    //     if (user) {
-    //         console.log("User is already logged in", user);
-    //         navigate('/chatApp', { state: user.email }); // Redirect to chatApp with user email
-    //     }
-    //     else {
-    //         console.log("No user is logged in, you can login now");
-    //     }
-    // }, [])
+        })
+    }, [])
+
     const [formData, setFormData] = useState({
         email: "",
         password: ""
@@ -46,36 +41,17 @@ function SignupScreen() {
     };
 
     const submitForm = (e) => {
-        setIsLoading(true);
         e.preventDefault();
-        
-        // createUserWithEmailAndPassword(auth, formData.email, formData.password)
-        //     .then((userCredential) => {
-        //         const user = userCredential.user;
-        //         console.log("User signuped in successfully", user);
-        //         navigate('/chatApp', { state: user.email }); // Redirect to chatApp with user email
-        //     })
-        //     .catch((error) => {
-        //         console.error("Error logging in", error);
-        //     });
-
-        // firebaseApis().registerUser(formData.email, formData.password)
-        //     .then(([user, success]) => {
-        //         console.log("User signuped in successfully", user,success);
-        //         navigate('/chatApp', { state: user.email }); // Redirect to chatApp with user email
-        //     })
-        //     .catch(([error, success]) => {
-        //         console.error("Error logging in", error, success);
-        //         alert("Error logging in: " + error.message);
-        //     });
+        setIsLoading(true);
 
         DataRepository().registerUser(formData.email, formData.password)
             .then(([user, signkeyStatus]) => {
-                console.log("User signuped in successfully", user, signkeyStatus);
                 setIsLoading(false);
+                console.log("User signuped in successfully", user, signkeyStatus);
                 navigate('/', { state: user.email }); // Redirect to chatApp with user email
             })
-            .catch(([error, success]) => { 
+            .catch(([error, success]) => {
+                setIsLoading(false)
                 console.error("Error logging in", error, success);
                 alert("Error logging in: " + error.message);
             });
@@ -87,12 +63,9 @@ function SignupScreen() {
         });
     }
 
-    const LoadingSpinner =()=>{
-        if(isLoading) return <LoadingStatus/>;
-    }
     return (
         <div>
-            {LoadingSpinner()}
+            {isLoading && <LoadingStatus />}
             <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-800">
                 <div className="bg-white p-8 rounded-lg shadow-md w-96 dark:bg-gray-900">
                     <h2 className="text-2xl font-bold mb-6 text-center text-blue-500">Sign up now</h2>
